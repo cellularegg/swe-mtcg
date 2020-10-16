@@ -3,7 +3,9 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 16
 VisualStudioVersion = 16.0.30523.141
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "swe-mtcg", "swe-mtcg\swe-mtcg.csproj", "{3B17160D-13F7-4656-9F89-AFC16B415AEA}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "swe-mtcg", "swe-mtcg\swe-mtcg.csproj", "{3B17160D-13F7-4656-9F89-AFC16B415AEA}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "swe-mtcg.Test", "swe-mtcg.Test\swe-mtcg.Test.csproj", "{AD326FD9-78B6-4917-A163-3BA01F7E59E8}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -15,6 +17,10 @@ Global
 		{3B17160D-13F7-4656-9F89-AFC16B415AEA}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{3B17160D-13F7-4656-9F89-AFC16B415AEA}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{3B17160D-13F7-4656-9F89-AFC16B415AEA}.Release|Any CPU.Build.0 = Release|Any CPU
+		{AD326FD9-78B6-4917-A163-3BA01F7E59E8}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{AD326FD9-78B6-4917-A163-3BA01F7E59E8}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{AD326FD9-78B6-4917-A163-3BA01F7E59E8}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{AD326FD9-78B6-4917-A163-3BA01F7E59E8}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
