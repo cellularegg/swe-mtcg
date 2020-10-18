@@ -10,6 +10,6 @@ namespace swe_mtcg.Card
         public IList<ICard> Cards { get; }
         public bool AddCard(ICard card);
         public bool RemoveCard(int idx);
-        public ICard PopCard(int idx);
+        public ICard PopCard(int idx = 0);
     }
 }

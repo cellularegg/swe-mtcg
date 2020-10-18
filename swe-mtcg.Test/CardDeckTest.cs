@@ -66,5 +66,27 @@ namespace swe_mtcg.Test
             Assert.IsTrue(actualCard2IsInList);
         }
 
+
+        [Test]
+        public void TestCardDeckPopCard()
+        {
+            // Arrange
+            ICardDeck cardDeck = new CardDeck();
+            ICard card1 = new SpellCard("Spell", 199);
+            ICard card2 = new MonsterCard("Monster", 199);
+            cardDeck.AddCard(card1);
+            cardDeck.AddCard(card2);
+            // Act
+            ICard actualPoppedCard100 = cardDeck.PopCard(100);
+            ICard actualPoppedCard2 = cardDeck.PopCard(1);
+            ICard actualPoppedCard1 = cardDeck.PopCard(0);
+            ICard actualPoppedCardNull = cardDeck.PopCard();
+            // Assert
+            Assert.IsNull(actualPoppedCard100);
+            Assert.IsNull(actualPoppedCardNull);
+            Assert.AreEqual(card1, actualPoppedCard2);
+            Assert.AreEqual(card2, actualPoppedCard1);
+        }
+
     }
 }

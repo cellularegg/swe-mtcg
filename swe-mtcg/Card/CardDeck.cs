@@ -37,7 +37,7 @@ namespace swe_mtcg.Card
             }
         }
 
-        public ICard PopCard(int idx)
+        public ICard PopCard(int idx = 0)
         {
             throw new NotImplementedException();
         }
