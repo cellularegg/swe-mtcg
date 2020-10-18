@@ -4,5 +4,6 @@
 Time Tracking:
 | Date  | Time in h | Comment |
 | ------------- | ------------- | ------------- |
-| 15-oct-2020  | 3  | Setup Github repo, initial OOP class design (TDD) |
-| 17-oct-2020  | 0.5  | Setup Github Actions |
+| 15-oct-2020 | 3 | Setup Github repo, initial OOP class design (TDD) |
+| 17-oct-2020 | 0.5 | Setup Github Actions |
+| 18-oct-2020 | 2 | Further developed CardDeck Class |
