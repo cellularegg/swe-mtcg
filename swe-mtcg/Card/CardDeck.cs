@@ -8,11 +8,12 @@ namespace swe_mtcg.Card
     public class CardDeck : ICardDeck
     {
         private int _maxCardAmount;
-        public List<ICard> Cards { get; }
+        private List<ICard> _Cards;
+        public IList<ICard> Cards { get { return this._Cards.AsReadOnly(); } }
 
         public CardDeck(int maxCardAmount = 4)
         {
-            Cards = new List<ICard>();
+            _Cards = new List<ICard>();
             if (maxCardAmount <= 0)
             {
                 this._maxCardAmount = 4;
@@ -27,7 +28,7 @@ namespace swe_mtcg.Card
         {
             if (_maxCardAmount > Cards.Count)
             {
-                Cards.Add(card);
+                _Cards.Add(card);
                 return true;
             }
             else
@@ -43,7 +44,16 @@ namespace swe_mtcg.Card
 
         public bool RemoveCard(int idx)
         {
-            throw new NotImplementedException();
+            // Check if emtpy or idx out of range
+            if (Cards.Count == 0 || (Cards.Count - 1) < idx)
+            {
+                return false;
+            }
+            else
+            {
+                _Cards.RemoveAt(idx);
+                return true;
+            }
         }
     }
 }
