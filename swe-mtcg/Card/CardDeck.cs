@@ -26,7 +26,7 @@ namespace swe_mtcg.Card
 
         public bool AddCard(ICard card)
         {
-            if (_maxCardAmount > Cards.Count)
+            if (_maxCardAmount > _Cards.Count)
             {
                 _Cards.Add(card);
                 return true;
@@ -39,13 +39,23 @@ namespace swe_mtcg.Card
 
         public ICard PopCard(int idx = 0)
         {
-            throw new NotImplementedException();
+            // Ceck if emtpy or idx out of range
+            if (_Cards.Count == 0 || (_Cards.Count - 1) < idx)
+            {
+                return null;
+            }
+            else
+            {
+                ICard tmp = _Cards[idx];
+                _Cards.RemoveAt(idx);
+                return tmp;
+            }
         }
 
         public bool RemoveCard(int idx)
         {
             // Check if emtpy or idx out of range
-            if (Cards.Count == 0 || (Cards.Count - 1) < idx)
+            if (_Cards.Count == 0 || (_Cards.Count - 1) < idx)
             {
                 return false;
             }
