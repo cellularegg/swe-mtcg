@@ -84,8 +84,8 @@ namespace swe_mtcg.Test
             // Assert
             Assert.IsNull(actualPoppedCard100);
             Assert.IsNull(actualPoppedCardNull);
-            Assert.AreEqual(card1, actualPoppedCard2);
-            Assert.AreEqual(card2, actualPoppedCard1);
+            Assert.AreEqual(card2, actualPoppedCard2);
+            Assert.AreEqual(card1, actualPoppedCard1);
         }
 
     }
