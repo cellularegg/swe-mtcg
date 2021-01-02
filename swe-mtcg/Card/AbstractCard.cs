@@ -13,14 +13,7 @@ namespace swe_mtcg.Card
         public AbstractCard(string name, int damage, CardElement element, CardType type)
         {
             this.Name = name;
-            if (damage < 0)
-            {
-                this.Damage = 0;
-            }
-            else
-            {
-                this.Damage = damage;
-            }
+            this.Damage = Math.Max(damage, 0);
             this.Element = element;
             this.Type = type;
         }
