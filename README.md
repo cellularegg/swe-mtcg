@@ -16,5 +16,13 @@ Time Tracking:
 | 02-jan-2021 | 1.5 | Made HTTP Server Multithreaded |
 | 02-jan-2021 | 3.4 | Read requirements thoroughly and redesigned class diagram|
 
+## Class Diagram
+![Class Diagram](https://raw.githubusercontent.com/cellularegg/swe-mtcg/dev/class_diagram.svg)
+
+## ToDo:
+* Develop classes according to class diagram
+* Think of a way to handle DB Connection / Persistance
+* Write Protocol / Documentation
+* 
 
 [Github Link](https://github.com/cellularegg/swe-mtcg)
