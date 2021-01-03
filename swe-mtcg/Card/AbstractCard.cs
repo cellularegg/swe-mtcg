@@ -11,7 +11,7 @@ namespace swe_mtcg.Card
         public double Damage { get; }
         public CardElement Element { get; }
 
-        protected AbstractCard(string name, double damage, CardElement element, string id = "a")
+        protected AbstractCard(string name, double damage, CardElement element, string id = "")
         {
             this.Name = name;
             this.Damage = Math.Max(damage, 0);
