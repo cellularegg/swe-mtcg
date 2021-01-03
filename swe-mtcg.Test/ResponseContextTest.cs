@@ -1,14 +1,12 @@
 ﻿using NUnit.Framework;
 using System;
-using System.Collections.Generic;
-using System.Text;
 
 namespace swe_mtcg.Test
 {
     public class ResponseContextTest
     {
         [Test]
-        public void TestRequestContextGetRequestContextGETRequest()
+        public void TestRequestContextGetRequestContextGetRequest()
         {
             // Arrange
             string request1Path = "/messages";

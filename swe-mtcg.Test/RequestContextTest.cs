@@ -1,7 +1,5 @@
 ﻿using NUnit.Framework;
 using System;
-using System.Collections.Generic;
-using System.Text;
 
 namespace swe_mtcg.Test
 {
@@ -9,7 +7,7 @@ namespace swe_mtcg.Test
     {
 
         [Test]
-        public void TestRequestContextGetRequestContextGETRequest()
+        public void TestRequestContextGetRequestContextGetRequest()
         {
             // Arrange
             string request1Path = "/messages";
@@ -54,7 +52,7 @@ CCCCC:: */*
         }
 
         [Test]
-        public void TestRequestContextGetRequestContextPOSTRequest()
+        public void TestRequestContextGetRequestContextPostRequest()
         {
             // Arrange
             string request1Path = "/messages";
