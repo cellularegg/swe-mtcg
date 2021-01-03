@@ -16,6 +16,7 @@ class AbstractCard{
  +CardType Type
  +double GetAttackValue(ICard other)
  +double GetEffectivenessMultiplier(ICard other)
+ +int Battle(ICard card1, ICard card2)
 }
 ICard <|--- AbstractCard
 
