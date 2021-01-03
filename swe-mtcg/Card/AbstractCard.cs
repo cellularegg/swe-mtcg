@@ -11,12 +11,12 @@ namespace swe_mtcg.Card
         public double Damage { get; }
         public CardElement Element { get; }
 
-        protected AbstractCard(string name, double damage, CardElement element, string id = "")
+        protected AbstractCard(string name, double damage, CardElement element, string id = "a")
         {
             this.Name = name;
             this.Damage = Math.Max(damage, 0);
             this.Element = element;
-            Id = Guid.TryParse(id, out var tmp) ? tmp : new Guid();
+            Id = Guid.TryParse(id, out Guid tmp) ? tmp : Guid.NewGuid();
         }
 
         public static ICard CreateCard(string name, double damage, string id = "")
