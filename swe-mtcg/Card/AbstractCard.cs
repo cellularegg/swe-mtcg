@@ -81,10 +81,80 @@ namespace swe_mtcg.Card
             }
         }
 
-        public float GetAttackValue(ICard other)
+        public double GetEffectivenessMultiplier(ICard other)
+        {
+            if (this.Element == other.Element)
+            {
+                return 1;
+            }
+
+            if ((this.Element == CardElement.Water && other.Element == CardElement.Fire) ||
+                (this.Element == CardElement.Fire && other.Element == CardElement.Normal) ||
+                (this.Element == CardElement.Normal && other.Element == CardElement.Water))
+            {
+                return 2;
+            }
+
+            return 0.5;
+        }
+
+        public double GetAttackValue(ICard other)
         {
             // TODO Implement Battle Logic
-            throw new NotImplementedException();
+
+            if (this is MonsterCard && other is MonsterCard)
+            {
+                MonsterCard thisMc = (MonsterCard) this;
+                MonsterCard otherMc = (MonsterCard) other;
+                // Goblins cannot damage Dragon
+                if (thisMc.CreatureType == MonsterCardCreatureType.Goblin &&
+                    otherMc.CreatureType == MonsterCardCreatureType.Dragon)
+                {
+                    return 0;
+                }
+
+                // Orks cannot damage Wizard
+                if (thisMc.CreatureType == MonsterCardCreatureType.Ork &&
+                    otherMc.CreatureType == MonsterCardCreatureType.Wizard)
+                {
+                    return 0;
+                }
+
+                // Dragons cannot Damage FireElves
+                if (thisMc.CreatureType == MonsterCardCreatureType.Dragon &&
+                    otherMc.CreatureType == MonsterCardCreatureType.FireElv)
+                {
+                    return 0;
+                }
+
+                // Monster only - no multiplier 
+                return this.Damage;
+            }
+
+            // Kraken instantly defeats spells
+            if (this is MonsterCard && other is SpellCard)
+            {
+                MonsterCard thisMc = (MonsterCard) this;
+                if (thisMc.CreatureType == MonsterCardCreatureType.Kraken)
+                {
+                    return double.MaxValue;
+                }
+            }
+
+            // Water Spell instantly defeats Knight
+            if (this is SpellCard && other is MonsterCard)
+            {
+                SpellCard thisSc = (SpellCard) this;
+                MonsterCard otherMc = (MonsterCard) other;
+                if (thisSc.Element == CardElement.Water && otherMc.CreatureType == MonsterCardCreatureType.Knight)
+                {
+                    return double.MaxValue;
+                }
+            }
+
+            // Calculate Effectiveness
+            double multiplier = this.GetEffectivenessMultiplier(other);
+            return multiplier * this.Damage;
         }
     }
 }

@@ -10,6 +10,6 @@ namespace swe_mtcg.Card
         string Name { get; }
         double Damage { get; }
         CardElement Element { get; }
-        float GetAttackValue(ICard other);
+        double GetAttackValue(ICard other);
     }
 }

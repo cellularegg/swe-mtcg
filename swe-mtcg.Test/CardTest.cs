@@ -191,17 +191,83 @@ namespace swe_mtcg.Test
         [Test]
         public void TestCardGetAttackValue()
         {
-            // Goblins cannot damage Dragon
-            // Orks cannot damage Wizzard
+            // Orks cannot damage Wizard
             // Water Spell instantly defeats Knight
             // Kraken instantly defeats spells
             // Dragons cannot Damage FireElves
 
             // Arrange
+            // Goblins cannot damage Dragon
+            MonsterCard goblin = new MonsterCard("Goblin", 1000, CardElement.Normal, MonsterCardCreatureType.Goblin);
+            MonsterCard dragonForGoblin =
+                new MonsterCard("Dragon", 1, CardElement.Normal, MonsterCardCreatureType.Dragon);
 
+            // Orks cannot damage Wizard
+            MonsterCard ork = new MonsterCard("Ork", 1000, CardElement.Normal, MonsterCardCreatureType.Ork);
+            MonsterCard wizard = new MonsterCard("Wizard", 1, CardElement.Normal, MonsterCardCreatureType.Wizard);
+
+            // Kraken instantly defeats spells
+            MonsterCard kraken = new MonsterCard("Kraken", 0, CardElement.Water, MonsterCardCreatureType.Kraken);
+            SpellCard krakenSpell = new SpellCard("Spell", 10000, CardElement.Water);
+
+            // Dragons cannot Damage FireElves
+            MonsterCard dragonForFireElv =
+                new MonsterCard("Dragon", 1000, CardElement.Fire, MonsterCardCreatureType.Dragon);
+            MonsterCard fireElv = new MonsterCard("Fire Elv", 10, CardElement.Fire, MonsterCardCreatureType.FireElv);
+
+            // Monster only
+            MonsterCard waterGoblin =
+                new MonsterCard("Water Goblin", 10, CardElement.Water, MonsterCardCreatureType.Goblin);
+            MonsterCard fireKnight =
+                new MonsterCard("Fire Knight", 15, CardElement.Fire, MonsterCardCreatureType.Knight);
+
+            // Spell Only
+            // Only need to check one multiplier since GetEffectivenessMultiplier is tested
+            SpellCard fireSpell = new SpellCard("Fire Spell", 10, CardElement.Fire);
+            SpellCard waterSpell = new SpellCard("Water Spell", 20, CardElement.Water);
+            
+            // Spell + Monster
+            SpellCard normalSpell = new SpellCard("Normal Spell", 10, CardElement.Normal);
+            MonsterCard normalKnight = new MonsterCard("normal Knight", 15, CardElement.Normal);
             // Act
 
             // Assert
+            // Goblins cannot damage Dragon
+            Assert.AreEqual(0, goblin.GetAttackValue(dragonForGoblin));
+            Assert.AreEqual(1, dragonForGoblin.GetAttackValue(goblin));
+
+            // Orks cannot damage Wizard
+            Assert.AreEqual(0, ork.GetAttackValue(wizard));
+            Assert.AreEqual(1, wizard.GetAttackValue(ork));
+
+            // Kraken instantly defeats spells
+            Assert.AreEqual(double.MaxValue, kraken.GetAttackValue(krakenSpell));
+            Assert.AreEqual(10000, krakenSpell.GetAttackValue(kraken));
+
+            // Dragons cannot Damage FireElves
+            Assert.AreEqual(0, dragonForFireElv.GetAttackValue(fireElv));
+            Assert.AreEqual(10, fireElv.GetAttackValue(dragonForFireElv));
+            
+            // Monster only - attack value should not change
+            Assert.AreEqual(10, waterGoblin.GetAttackValue(fireKnight));
+            Assert.AreEqual(15, fireKnight.GetAttackValue(waterGoblin));
+            
+            // Spell only - check if multiplier is applied correctly
+            Assert.AreEqual(5, fireSpell.GetAttackValue(waterSpell));
+            Assert.AreEqual(40, waterSpell.GetAttackValue(fireSpell));
+            
+            // Spell + Monster
+            // Firespell + Watermonster
+            Assert.AreEqual(5,fireSpell.GetAttackValue(waterGoblin));
+            Assert.AreEqual(20, waterGoblin.GetAttackValue(fireSpell));
+            
+            // Waterspell + Watermonster
+            Assert.AreEqual(10,waterGoblin.GetAttackValue(waterSpell));
+            Assert.AreEqual(20,waterSpell.GetAttackValue(waterGoblin));
+            
+            // Regularspell + Watermonster
+            Assert.AreEqual(10, normalSpell.GetAttackValue(normalKnight));
+            Assert.AreEqual(15, normalKnight.GetAttackValue(normalSpell));
         }
     }
 }
