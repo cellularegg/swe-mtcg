@@ -15,6 +15,7 @@ class AbstractCard{
  +string Name
  +CardType Type
  +double GetAttackValue(ICard other)
+ +double GetEffectivenessMultiplier(ICard other)
 }
 ICard <|--- AbstractCard
 
@@ -34,7 +35,6 @@ enum MonsterCardCreatureType{
 }
 
 class SpellCard{
- +double GetEffectivenessMultiplier(ICard other)
 }
 enum CardType{
  Normal
