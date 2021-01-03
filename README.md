@@ -14,15 +14,16 @@ Time Tracking:
 | 12-nov-2020 | 4 | Implemented other request Methods and msg in Path (GET /msgs/1) |
 | 15-nov-2020 | 2 | Recorded Video + minor tweaks |
 | 02-jan-2021 | 1.5 | Made HTTP Server Multithreaded |
-| 02-jan-2021 | 3.4 | Read requirements thoroughly and redesigned class diagram|
+| 02-jan-2021 | 3.5 | Read requirements thoroughly and redesigned class diagram |
+| 03-jan-2021 | 5 | Developed Card Logic (GetAttackValue() + GetEffectivenessMultiplier()) |
 
 ## Class Diagram
 ![Class Diagram](https://raw.githubusercontent.com/cellularegg/swe-mtcg/dev/class_diagram.svg)
-
+Note: Client / Curl Script is just a summary of the curl script to visualize the client requirements
 ## ToDo:
 * Develop classes according to class diagram
-* Think of a way to handle DB Connection / Persistance
+* Think of a way to handle DB Connection / Persistence
 * Write Protocol / Documentation
-* 
+
 
 [Github Link](https://github.com/cellularegg/swe-mtcg)
