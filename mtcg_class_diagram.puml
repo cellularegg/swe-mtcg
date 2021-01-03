@@ -3,18 +3,18 @@ skinparam classAttributeIconSize 0
 
 Interface ICard{
  +Guid Id
- +float Damage
+ +double Damage
  +string Name
  +CardType Type
- +float GetAttackValue(ICard other)
+ +double GetAttackValue(ICard other)
 }
 
 class AbstractCard{
  +Guid Id
- +float Damage
+ +double Damage
  +string Name
  +CardType Type
- +float GetAttackValue(ICard other)
+ +double GetAttackValue(ICard other)
 }
 ICard <|--- AbstractCard
 
@@ -49,8 +49,8 @@ class User{
  +string NameTag
  +string Bio
  +string Status
- +float Elo
- +float Coins
+ +double Elo
+ +double Coins
  +List<ICard> Stack
  +GetGameHistory()
  +List<ICard>[4] Deck
@@ -79,8 +79,8 @@ class TradeDeal {
  -string username
  -ICard _Card
  -CardType _WantedType
- -float _MinDamage
- +TradeDeal(string id, string username, ICard card, CardType type, float minDmg)
+ -double _MinDamage
+ +TradeDeal(string id, string username, ICard card, CardType type, double minDmg)
 }
 
 class Server{
