@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Net.NetworkInformation;
+using System.Reflection.Metadata.Ecma335;
 
 namespace swe_mtcg.Card
 {
@@ -96,6 +97,27 @@ namespace swe_mtcg.Card
             }
 
             return 0.5;
+        }
+
+        // Battle of two cards
+        // return 1 when card 1 wins
+        // return 2 when card 2 wins
+        // return 0 when draw
+        public static int Battle(ICard card1, ICard card2)
+        {
+            double card1AttackVal = card1.GetAttackValue(card2);
+            double card2AttackVal = card2.GetAttackValue(card1);
+            if (card1AttackVal < card2AttackVal)
+            {
+                return 2;
+            }
+
+            if (card1AttackVal > card2AttackVal)
+            {
+                return 1;
+            }
+
+            return 0;
         }
 
         public double GetAttackValue(ICard other)

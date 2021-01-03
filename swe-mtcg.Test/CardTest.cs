@@ -1,4 +1,5 @@
 ﻿using System.Runtime.InteropServices;
+using System.Security.Permissions;
 using NUnit.Framework;
 using swe_mtcg.Card;
 
@@ -225,7 +226,7 @@ namespace swe_mtcg.Test
             // Only need to check one multiplier since GetEffectivenessMultiplier is tested
             SpellCard fireSpell = new SpellCard("Fire Spell", 10, CardElement.Fire);
             SpellCard waterSpell = new SpellCard("Water Spell", 20, CardElement.Water);
-            
+
             // Spell + Monster
             SpellCard normalSpell = new SpellCard("Normal Spell", 10, CardElement.Normal);
             MonsterCard normalKnight = new MonsterCard("normal Knight", 15, CardElement.Normal);
@@ -247,27 +248,63 @@ namespace swe_mtcg.Test
             // Dragons cannot Damage FireElves
             Assert.AreEqual(0, dragonForFireElv.GetAttackValue(fireElv));
             Assert.AreEqual(10, fireElv.GetAttackValue(dragonForFireElv));
-            
+
             // Monster only - attack value should not change
             Assert.AreEqual(10, waterGoblin.GetAttackValue(fireKnight));
             Assert.AreEqual(15, fireKnight.GetAttackValue(waterGoblin));
-            
+
             // Spell only - check if multiplier is applied correctly
             Assert.AreEqual(5, fireSpell.GetAttackValue(waterSpell));
             Assert.AreEqual(40, waterSpell.GetAttackValue(fireSpell));
-            
+
             // Spell + Monster
             // Firespell + Watermonster
-            Assert.AreEqual(5,fireSpell.GetAttackValue(waterGoblin));
+            Assert.AreEqual(5, fireSpell.GetAttackValue(waterGoblin));
             Assert.AreEqual(20, waterGoblin.GetAttackValue(fireSpell));
-            
+
             // Waterspell + Watermonster
-            Assert.AreEqual(10,waterGoblin.GetAttackValue(waterSpell));
-            Assert.AreEqual(20,waterSpell.GetAttackValue(waterGoblin));
-            
+            Assert.AreEqual(10, waterGoblin.GetAttackValue(waterSpell));
+            Assert.AreEqual(20, waterSpell.GetAttackValue(waterGoblin));
+
             // Regularspell + Watermonster
             Assert.AreEqual(10, normalSpell.GetAttackValue(normalKnight));
             Assert.AreEqual(15, normalKnight.GetAttackValue(normalSpell));
+        }
+
+        [Test]
+        public void TestCardBattle()
+        {
+            // Not every case needs to be tested as GetAttackValue is Tested
+            // Monster only
+            MonsterCard waterGoblin = new MonsterCard("Water Goblin", 10, CardElement.Water);
+            MonsterCard fireKnight = new MonsterCard("Fire Knight", 15, CardElement.Fire);
+
+            // Spell only
+            SpellCard fireSpell1 = new SpellCard("Fire Spell", 10, CardElement.Fire);
+            SpellCard waterSpell1 = new SpellCard("Water Spell", 20, CardElement.Water);
+            SpellCard fireSpell2 = new SpellCard("Fire Spell", 20, CardElement.Fire);
+            SpellCard waterSpell2 = new SpellCard("Water Spell", 5, CardElement.Water);
+            SpellCard fireSpell3 = new SpellCard("Fire Spell", 90, CardElement.Fire);
+            SpellCard waterSpell3 = new SpellCard("Water Spell", 5, CardElement.Water);
+
+            // Mixed Fight
+            SpellCard waterSpell4 = new SpellCard("Water Spell", 10, CardElement.Water);
+            SpellCard normalSpell = new SpellCard("Normal spell", 10, CardElement.Normal);
+            MonsterCard normalKnight = new MonsterCard("Knight", 15, CardElement.Normal);
+            
+            // Monster only
+            Assert.AreEqual(2, AbstractCard.Battle(waterGoblin, fireKnight));
+            // Spells only
+            Assert.AreEqual(2, AbstractCard.Battle(fireSpell1, waterSpell1));
+            Assert.AreEqual(0, AbstractCard.Battle(fireSpell2, waterSpell2));
+            Assert.AreEqual(1, AbstractCard.Battle(fireSpell3, waterSpell3));
+            // Mixed battle
+            Assert.AreEqual(2, AbstractCard.Battle(fireSpell1, waterGoblin));
+            Assert.AreEqual(0, AbstractCard.Battle(waterSpell4, waterGoblin));
+            Assert.AreEqual(1, AbstractCard.Battle(normalSpell, waterGoblin));
+            Assert.AreEqual(2, AbstractCard.Battle(normalSpell, normalKnight));
+            
+            
         }
     }
 }
