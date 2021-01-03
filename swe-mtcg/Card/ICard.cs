@@ -6,9 +6,10 @@ namespace swe_mtcg.Card
 {
     public interface ICard
     {
+        Guid Id { get; }
         string Name { get; }
-        int Damage { get; }
+        double Damage { get; }
         CardElement Element { get; }
-        CardType Type { get; }
+        float GetAttackValue(ICard other);
     }
 }
