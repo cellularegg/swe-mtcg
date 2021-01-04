@@ -48,6 +48,7 @@ namespace swe_mtcg.Card
 
         public ICard PopCard()
         {
+            // Maybe not the best solution, should be sufficient
             try
             {
                 return _cards.TryRemove(_cards.First().Key, out ICard c) ? c : null;
