@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Linq;
 using System.Security.Cryptography.X509Certificates;
+using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using NUnit.Framework;
@@ -12,12 +13,13 @@ namespace swe_mtcg.Test
         [Test]
         public void TestRegisterUser()
         {
+            ServerData sd = ServerData.Instance;
+            sd.Reset();
             string validJsonUser = "{\"Username\":\"kienboec\", \"Password\":\"daniel\"}";
             string invalidJsonUser = "{\"name\":\"test\", \"Password\":\"daniel\"}";
             string invalidJson = "{\"Username\":\"kienboec\", \"Password\":\"daniel";
 
             string duplicateUserName = "{\"Username\":\"kienboec\", \"Password\":\"daniel\"}";
-            ServerData sd = ServerData.Instance;
 
             Assert.IsTrue(sd.RegisterUser(validJsonUser));
             Assert.IsFalse(sd.RegisterUser(invalidJsonUser));
@@ -30,17 +32,20 @@ namespace swe_mtcg.Test
         [Test]
         public void TestGetToken()
         {
+            ServerData sd = ServerData.Instance;
+            sd.Reset();
             string validJsonUser1 = "{\"Username\":\"kienboec\", \"Password\":\"daniel\"}";
             string validJsonUser2 = "{\"Username\":\"admin\", \"Password\":\"pw\"}";
+            string invalidJsonUser1 = "{\"Username\":\"admin\", \"Password\":\"wrongpw\"}";
             string invalidJson = "{\"Username\":\"admin\", \"Password\":\"pw";
 
-            ServerData sd = ServerData.Instance;
 
             Assert.IsTrue(sd.RegisterUser(validJsonUser1));
             Assert.IsTrue(sd.RegisterUser(validJsonUser2));
 
-            Assert.AreEqual("kienboec-mtcgToken", sd.GetToken(validJsonUser1));
-            Assert.AreEqual("admin-mtcgToken", sd.GetToken(validJsonUser2));
+            Assert.AreEqual("{\"token\":\"kienboec-mtcgToken\"}", sd.GetToken(validJsonUser1));
+            Assert.AreEqual("{\"token\":\"admin-mtcgToken\"}", sd.GetToken(validJsonUser2));
+            Assert.IsEmpty(sd.GetToken(invalidJsonUser1));
             Assert.IsEmpty(sd.GetToken(invalidJson));
 
             sd.Reset();
@@ -50,15 +55,22 @@ namespace swe_mtcg.Test
         public void TestCreatePackage()
         {
             ServerData sd = ServerData.Instance;
+            sd.Reset();
             string validJsonPackage =
                 "[{\"Id\":\"845f0dc7-37d0-426e-994e-43fc3ac83c08\", \"Name\":\"WaterGoblin\", \"Damage\": 10.0}, {\"Id\":\"99f8f8dc-e25e-4a95-aa2c-782823f36e2a\", \"Name\":\"Dragon\", \"Damage\": 50.0}, {\"Id\":\"e85e3976-7c86-4d06-9a80-641c2019a79f\", \"Name\":\"WaterSpell\", \"Damage\": 20.0}, {\"Id\":\"1cb6ab86-bdb2-47e5-b6e4-68c5ab389334\", \"Name\":\"Ork\", \"Damage\": 45.0}, {\"Id\":\"dfdd758f-649c-40f9-ba3a-8657f4b3439f\", \"Name\":\"FireSpell\",    \"Damage\": 25.0}]";
+            string invalidJsonDuplicateId = validJsonPackage;
+            string validJsonPackageWithoutId =
+                "[{\"Name\":\"WaterGoblin\", \"Damage\": 10.0}, {\"Name\":\"Dragon\", \"Damage\": 50.0}, {\"Name\":\"WaterSpell\", \"Damage\": 20.0}, {\"Name\":\"Ork\", \"Damage\": 45.0}, {\"Name\":\"FireSpell\",    \"Damage\": 25.0}]";
+
             string invalidJsonPackage = "{\"name\":\"test\", \"Password\":\"daniel\"}";
             string invalidJson = "{\"name\":\"test\", \"Password\":\"daniel";
 
             Assert.IsTrue(sd.AddPackage(validJsonPackage));
+            Assert.IsTrue(sd.AddPackage(validJsonPackageWithoutId));
+            Assert.IsFalse(sd.AddPackage(invalidJsonDuplicateId));
             Assert.IsFalse(sd.AddPackage(invalidJsonPackage));
             Assert.IsFalse(sd.AddPackage(invalidJson));
-            // ToDo chekc if package actually exists?
+            // ToDo check if package actually exists?
 
             sd.Reset();
         }
@@ -67,7 +79,7 @@ namespace swe_mtcg.Test
         public void TestAcquirePackage()
         {
             ServerData sd = ServerData.Instance;
-
+            sd.Reset();
             string validUserToken = "admin-mtcgToken";
             string invalidUserToken = "admin";
             string validJsonUser = "{\"Username\":\"admin\", \"Password\":\"geheim\"}";
@@ -115,6 +127,8 @@ namespace swe_mtcg.Test
             string invalidToken = "aaa";
             string validJsonPackage1 =
                 "[{\"Id\":\"845f0dc7-37d0-426e-994e-43fc3ac83c08\", \"Name\":\"WaterGoblin\", \"Damage\": 10.0}, {\"Id\":\"99f8f8dc-e25e-4a95-aa2c-782823f36e2a\", \"Name\":\"Dragon\", \"Damage\": 50.0}, {\"Id\":\"e85e3976-7c86-4d06-9a80-641c2019a79f\", \"Name\":\"WaterSpell\", \"Damage\": 20.0}, {\"Id\":\"1cb6ab86-bdb2-47e5-b6e4-68c5ab389334\", \"Name\":\"Ork\", \"Damage\": 45.0}, {\"Id\":\"dfdd758f-649c-40f9-ba3a-8657f4b3439f\", \"Name\":\"FireSpell\",    \"Damage\": 25.0}]";
+            string validJsonPackage2 =
+                "[{\"Id\":\"2272ba48-6662-404d-a9a1-41a9bed316d9\", \"Name\":\"WaterGoblin\", \"Damage\": 11.0}, {\"Id\":\"3871d45b-b630-4a0d-8bc6-a5fc56b6a043\", \"Name\":\"Dragon\", \"Damage\": 70.0}, {\"Id\":\"166c1fd5-4dcb-41a8-91cb-f45dcd57cef3\", \"Name\":\"Knight\", \"Damage\": 22.0}, {\"Id\":\"237dbaef-49e3-4c23-b64b-abf5c087b276\", \"Name\":\"WaterSpell\", \"Damage\": 40.0}, {\"Id\":\"27051a20-8580-43ff-a473-e986b52f297a\", \"Name\":\"FireElf\", \"Damage\": 28.0}]";
             string jsonDecksValid1 =
                 "[\"845f0dc7-37d0-426e-994e-43fc3ac83c08\", \"99f8f8dc-e25e-4a95-aa2c-782823f36e2a\", \"e85e3976-7c86-4d06-9a80-641c2019a79f\", \"1cb6ab86-bdb2-47e5-b6e4-68c5ab389334\"]";
             string jsonDecksValid2 =
@@ -159,6 +173,7 @@ namespace swe_mtcg.Test
         public void TestGetLoginNameFromToken()
         {
             ServerData sd = ServerData.Instance;
+            sd.Reset();
             string validToken1 = "admin-mtcgToken";
             string validJsonUser1 = "{\"Username\":\"admin\", \"Password\":\"geheim\"}";
 
@@ -176,6 +191,7 @@ namespace swe_mtcg.Test
         public void TestGetStackAsJson()
         {
             ServerData sd = ServerData.Instance;
+            sd.Reset();
             string validToken1 = "admin-mtcgToken";
             string invalidToken = "invalidtoken";
             string validJsonUser1 = "{\"Username\":\"admin\", \"Password\":\"geheim\"}";
@@ -216,6 +232,7 @@ namespace swe_mtcg.Test
         public void TestGetStackAsPlain()
         {
             ServerData sd = ServerData.Instance;
+            sd.Reset();
             string validToken1 = "admin-mtcgToken";
             string invalidToken = "invalidtoken";
             string validJsonUser1 = "{\"Username\":\"admin\", \"Password\":\"geheim\"}";
@@ -254,6 +271,7 @@ namespace swe_mtcg.Test
         public void TestGetDeckAsJson()
         {
             ServerData sd = ServerData.Instance;
+            sd.Reset();
             string validToken1 = "admin-mtcgToken";
             string invalidToken = "invalidtoken";
             string validJsonUser1 = "{\"Username\":\"admin\", \"Password\":\"geheim\"}";
@@ -293,6 +311,7 @@ namespace swe_mtcg.Test
         public void TestGetDeckAsPlain()
         {
             ServerData sd = ServerData.Instance;
+            sd.Reset();
             string validToken1 = "admin-mtcgToken";
             string invalidToken = "invalidtoken";
             string validJsonUser1 = "{\"Username\":\"admin\", \"Password\":\"geheim\"}";
@@ -327,10 +346,59 @@ namespace swe_mtcg.Test
         }
 
         [Test]
+        public void TestGetUserData()
+        {
+            ServerData sd = ServerData.Instance;
+            sd.Reset();
+            string validJsonUser = "{\"Username\":\"kienboec\", \"Password\":\"daniel\"}";
+
+            Assert.IsTrue(sd.RegisterUser(validJsonUser));
+            string username = "kienboec";
+            string token = "kienboec-mtcgToken";
+            string json = sd.GetUserData(username, token);
+            json = string.Concat(json.ToLower().Replace(Environment.NewLine, "").Where(c => !Char.IsWhiteSpace(c)));
+            StringAssert.Contains("\"loginname\":\"kienboec\"", json);
+            StringAssert.Contains("\"coins\":20", json);
+            StringAssert.Contains("\"name\":\"kienboec\"", json);
+            StringAssert.Contains("\"bio\":\"\"", json);
+            StringAssert.Contains("\"wins\":0", json);
+            StringAssert.Contains("\"looses\":0", json);
+            StringAssert.Contains("\"elo\":100", json);
+            sd.Reset();
+        }
+
+        [Test]
+        public void TestUpdateUserData()
+        {
+            ServerData sd = ServerData.Instance;
+            sd.Reset();
+            string validJsonUser = "{\"Username\":\"kienboec\", \"Password\":\"daniel\"}";
+
+            Assert.IsTrue(sd.RegisterUser(validJsonUser));
+            string token = "kienboec-mtcgToken";
+            string username = "kienboec";
+            string validUpdateUserJson = "{\"Name\": \"Hoax\",  \"Bio\": \"me playin...\", \"Status\": \":-)\"}";
+            string invalidUpdateUserJson1 = "{\"username\": \"Hoax\",  \"Bio\": \"me playin...\", \"Status\": \":-)\"}";
+            string invalidUpdateUserJson2 = "{Name\": \"Hoax\",  \"Bio\": \"me playin...\", \"Status\": \":-)\"}";
+            string invalidToken = "admin";
+            Assert.IsTrue(sd.UpdateUserData(token, validUpdateUserJson));
+            Assert.IsFalse(sd.UpdateUserData(token, invalidUpdateUserJson1));
+            Assert.IsFalse(sd.UpdateUserData(token, invalidUpdateUserJson2));
+            Assert.IsFalse(sd.UpdateUserData(invalidToken, validJsonUser));
+            string json = sd.GetUserData(username, token);
+            json = string.Concat(json.ToLower().Replace(Environment.NewLine, "").Where(c => !Char.IsWhiteSpace(c)));
+            StringAssert.Contains("\"name\":\"hoax\"", json);
+            StringAssert.Contains("\"bio\":\"meplayin...\"", json);
+            StringAssert.Contains("\"status\":\":-)\"", json);
+            sd.Reset(); 
+        }
+
+        [Test]
         public void TestQueueForBattle()
         {
             // Not really a Unit test more a manual check if everything works
             ServerData sd = ServerData.Instance;
+            sd.Reset();
             string validToken1 = "david-mtcgToken";
             string validJsonUser1 = "{\"Username\":\"david\", \"Password\":\"geheim\"}";
             string validToken2 = "admin-mtcgToken";

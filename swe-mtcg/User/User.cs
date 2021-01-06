@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Concurrent;
+using System.Collections.Generic;
 using System.Net.NetworkInformation;
 using System.Security.Principal;
 using System.Text;
@@ -12,7 +13,7 @@ namespace swe_mtcg.User
     public class User
     {
         public string LoginName { get; set; }
-        public string NameTag { get; set; }
+        [JsonProperty("Name")] public string NameTag { get; set; }
         public string Bio { get; set; }
         public string Status { get; set; }
         public double Elo { get; private set; }
@@ -20,10 +21,11 @@ namespace swe_mtcg.User
         public int Wins { get; private set; }
         public int Looses { get; private set; }
         public double Coins { get; set; }
-        public string Password { get; }
-        public string Token { get; }
-        public ICardCollection Stack { get; set; }
-        public ICardCollection Deck { get; set; }
+        [JsonIgnore] public string Password { get; }
+        [JsonIgnore] public string Token { get; }
+        [JsonIgnore] public ICardCollection Stack { get; set; }
+        [JsonIgnore] public ICardCollection Deck { get; set; }
+        [JsonIgnore] public Dictionary<DateTime, BattleDetails> MatchHistory { get; set; }
 
         [JsonConstructor]
         public User(string username, string password)
@@ -42,30 +44,13 @@ namespace swe_mtcg.User
             Status = "";
             Elo = 100;
             Coins = 20;
+            MatchHistory = new Dictionary<DateTime, BattleDetails>();
             Stack = new CardCollection();
             Deck = new CardCollection(4);
             Wins = 0;
             Looses = 0;
             TotalGames = 0;
         }
-
-        // public User(string loginName, string password, string nameTag = "", string bio = "", string status = "")
-        // {
-        //     LoginName = loginName;
-        //     Password = password;
-        //     Token = loginName + "-mtcgToken";
-        //     NameTag = nameTag == "" ? loginName : nameTag;
-        //     Bio = bio;
-        //     Status = status;
-        //     Elo = 100;
-        //     Coins = 20;
-        //     Stack = new CardCollection();
-        //     Deck = new CardCollection(4);
-        //     Wins = 0;
-        //     Looses = 0;
-        //     TotalGames = 0;
-        // }
-
 
         public bool MoveCardToDeck(string id)
         {

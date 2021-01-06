@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.ComponentModel.Design;
+using System.Data;
 using System.Diagnostics;
 using System.Linq;
 using System.Runtime.CompilerServices;
@@ -9,6 +11,7 @@ using System.Threading;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using swe_mtcg.Card;
+using swe_mtcg.User;
 
 namespace swe_mtcg
 {
@@ -22,6 +25,9 @@ namespace swe_mtcg
         }
 
         private ConcurrentDictionary<string, User.User> _users;
+
+        // bool because it is the smallest data type (1 bit?)
+        private Dictionary<string, bool> _allCardIds;
         private ConcurrentBag<ICardCollection> _availablePackages;
         private ConcurrentQueue<string> _battleQ;
         private ConcurrentQueue<string> _batteResults;
@@ -36,13 +42,17 @@ namespace swe_mtcg
             _batteResults = new ConcurrentQueue<string>();
             _users = new ConcurrentDictionary<string, User.User>();
             _availablePackages = new ConcurrentBag<ICardCollection>();
+            _allCardIds = new Dictionary<string, bool>();
         }
 
         // For testing with singleton class
         public void Reset()
         {
+            _battleQ = new ConcurrentQueue<string>();
+            _batteResults = new ConcurrentQueue<string>();
             _users = new ConcurrentDictionary<string, User.User>();
             _availablePackages = new ConcurrentBag<ICardCollection>();
+            _allCardIds = new Dictionary<string, bool>();
         }
 
         public bool RegisterUser(string jsonBody)
@@ -65,9 +75,20 @@ namespace swe_mtcg
             try
             {
                 User.User tmp = JsonConvert.DeserializeObject<User.User>(jsonBody);
-                string token = _users[tmp.LoginName].Token;
-                return token;
+                string token = "";
+                if (_users.ContainsKey(tmp.LoginName) && tmp.Password == _users[tmp.LoginName].Password)
+                {
+                    token = _users[tmp.LoginName].Token;
+                }
+                else
+                {
+                    throw new ArgumentException("Error invalid username or password");
+                }
+
+                JObject jsonObject = new JObject {{"token", token}};
+                return JsonConvert.SerializeObject(jsonObject);
             }
+            // Invalid ArgumentException or JsonReaderException
             catch (Exception e)
             {
                 Debug.WriteLine(e);
@@ -77,23 +98,44 @@ namespace swe_mtcg
 
         public bool AddPackage(string jsonBody)
         {
-            // TODO Check for duplicate ids?
             string id;
             string name;
             double damage;
+
             try
             {
-                ICardCollection tmpPackage = new CardCollection(5);
-                JArray parsedArr = JArray.Parse(jsonBody);
-                foreach (JObject jObjectCard in parsedArr.Children<JObject>())
+                lock (_allCardIds)
                 {
-                    id = jObjectCard.GetValue("Id", StringComparison.OrdinalIgnoreCase).Value<string>();
-                    name = jObjectCard.GetValue("Name", StringComparison.OrdinalIgnoreCase).Value<string>();
-                    damage = jObjectCard.GetValue("Damage", StringComparison.OrdinalIgnoreCase).Value<double>();
-                    tmpPackage.AddCard(AbstractCard.CreateCard(name, damage, id));
+                    ICardCollection tmpPackage = new CardCollection(5);
+                    JArray parsedArr = JArray.Parse(jsonBody);
+                    foreach (JObject jObjectCard in parsedArr.Children<JObject>())
+                    {
+                        if (jObjectCard.ContainsKey("Id"))
+                        {
+                            id = jObjectCard.GetValue("Id", StringComparison.OrdinalIgnoreCase).Value<string>();
+                        }
+                        else
+                        {
+                            id = "";
+                        }
+
+                        name = jObjectCard.GetValue("Name", StringComparison.OrdinalIgnoreCase).Value<string>();
+                        damage = jObjectCard.GetValue("Damage", StringComparison.OrdinalIgnoreCase).Value<double>();
+                        if (_allCardIds.ContainsKey(id))
+                        {
+                            return false;
+                        }
+
+                        ICard tmp = AbstractCard.CreateCard(name, damage, id);
+                        if (tmpPackage.AddCard(tmp))
+                        {
+                            _allCardIds.Add(tmp.Id.ToString(), true);
+                        }
+                    }
+
+                    _availablePackages.Add(tmpPackage);
                 }
 
-                _availablePackages.Add(tmpPackage);
                 return true;
             }
             catch (Exception e)
@@ -117,8 +159,13 @@ namespace swe_mtcg
                 return false;
             }
 
+            if (_users[username].Coins < 5)
+            {
+                return false;
+            }
+
             bool succeeded = _availablePackages.TryTake(out ICardCollection tmpColl);
-            if (succeeded && tmpColl != null && _users[username].Coins >= 5)
+            if (succeeded && tmpColl != null)
             {
                 _users[username].Coins -= 5;
                 foreach (KeyValuePair<string, ICard> card in tmpColl.Cards)
@@ -142,7 +189,6 @@ namespace swe_mtcg
                 return string.Empty;
             }
 
-            // TODO Check username for invalid character
             // Assuming '-' is an invalid Username
             try
             {
@@ -280,36 +326,52 @@ namespace swe_mtcg
             return _users[username].Stack.ToString();
         }
 
-        public string GetScoreboard()
-        {
-            // TODO Add DB Connection + Scoreboard output
-            throw new NotImplementedException();
-        }
 
         public string QueueForBattle(string token)
         {
             string username = GetLoginNameFromToken(token);
+            if (!_users.ContainsKey(username))
+            {
+                return string.Empty;
+            }
+
+            int gameCount = _users[username].MatchHistory.Count;
             _battleQ.Enqueue(username);
+
             bool res;
             if (_battleQ.Count >= 2)
             {
                 res = Battle();
             }
 
-            string battleResMsg;
-            // wait 15 sek for result else timeout
-            for (int i = 0; i < 15; i++)
+            // string battleResMsg;
+
+            // wait 20 sek for result else timeout
+            // Very bad code... -> When Battle takes more than 20 secs all future battles logs are wrong....
+            for (int i = 0; i < 200; i++)
             {
-                if (_batteResults.TryDequeue(out battleResMsg))
+                // if (_batteResults.TryDequeue(out battleResMsg))
+                // {
+                //     return battleResMsg;
+                // }
+                if (_users[username].MatchHistory.Count > gameCount)
                 {
-                    return battleResMsg;
+                    // get latest battle
+                    BattleDetails bd = _users[username].MatchHistory[_users[username].MatchHistory.Keys.Max()];
+                    return JsonConvert.SerializeObject(bd);
+                    // return bd.ToString();
                 }
+
                 // Sleep not optimal
                 // Possible solution callback with event?
-                Thread.Sleep(1000);
+                Thread.Sleep(100);
             }
 
-            return "Timeout";
+            // unlikely -> if user cannot find opponent to battle
+            // dirty fix -> remove a user from Q
+            string tmpUser = string.Empty;
+            _battleQ.TryDequeue(out tmpUser);
+            return string.Empty;
         }
 
         public bool Battle()
@@ -347,45 +409,63 @@ namespace swe_mtcg
                 user2BattleDeck.Add(AbstractCard.CreateCard(card.Value.Name, card.Value.Damage, card.Key));
             }
 
-            Random rd = new Random((int) DateTime.Now.Ticks);
-            
+            BattleDetails battleDetails = new BattleDetails(user1, user2);
+
             StringBuilder sb = new StringBuilder();
-            sb.AppendLine($"Battle player1: {user1} vs. player2: {user2}");
+            // sb.AppendLine($"Battle player1: {user1} vs. player2: {user2}");
             // Actual battle
             string battleResMsg;
             for (int i = 0; i < 100; i++)
             {
-                sb.Append($"Round {i}: ");
+                Random rd = new Random((int) DateTime.Now.Ticks);
+                // sb.Append($"Round {i}: ");
                 if (user1BattleDeck.Count == 0)
                 {
-                    _users[user1].Loose();
-                    _users[user2].Win();
-                    sb.AppendLine($"Player2: {user2} Won.");
-                    _batteResults.Enqueue(sb.ToString());
-                    _batteResults.Enqueue(sb.ToString());
+                    // you can play practice matches against yourself but cannot "cheat" elo by fighting against yourself
+                    if (user1 != user2)
+                    {
+                        _users[user1].Loose();
+                        _users[user2].Win();
+                    }
+
+                    battleDetails.Winner = user2;
+                    _users[user1].MatchHistory.Add(DateTime.Now, battleDetails);
+                    _users[user2].MatchHistory.Add(DateTime.Now, battleDetails);
+
+                    // sb.AppendLine($"Player2: {user2} Won.");
+                    // _batteResults.Enqueue(sb.ToString());
+                    // _batteResults.Enqueue(sb.ToString());
                     return true;
                 }
 
                 if (user2BattleDeck.Count == 0)
                 {
-                    _users[user1].Loose();
-                    _users[user2].Win();
-                    sb.AppendLine($"Player1: {user1} Won.");
-                    _batteResults.Enqueue(sb.ToString());
-                    _batteResults.Enqueue(sb.ToString());
+                    if (user1 != user2)
+                    {
+                        _users[user1].Loose();
+                        _users[user2].Win();
+                    }
+
+                    battleDetails.Winner = user1;
+                    _users[user1].MatchHistory.Add(DateTime.Now, battleDetails);
+                    _users[user2].MatchHistory.Add(DateTime.Now, battleDetails);
+                    // sb.AppendLine($"Player1: {user1} Won.");
+                    // _batteResults.Enqueue(sb.ToString());
+                    // _batteResults.Enqueue(sb.ToString());
                     return true;
                 }
 
                 int rdIdx = rd.Next(user1BattleDeck.Count);
                 ICard user1Card = user1BattleDeck[rdIdx];
                 user1BattleDeck.RemoveAt(rdIdx);
-                
+
                 rdIdx = rd.Next(user2BattleDeck.Count);
                 ICard user2Card = user2BattleDeck[rd.Next(user2BattleDeck.Count)];
                 user2BattleDeck.RemoveAt(rdIdx);
-                
+
                 int battleResNr = AbstractCard.Battle(user1Card, user2Card, out battleResMsg);
                 sb.AppendLine(battleResMsg);
+                battleDetails.AddRound(battleResMsg);
                 switch (battleResNr)
                 {
                     case 0:
@@ -401,16 +481,139 @@ namespace swe_mtcg
                     case 2:
                         // user 2 wins
                         user2BattleDeck.Add(user1Card);
-                        user2BattleDeck.Add(user2Card); 
+                        user2BattleDeck.Add(user2Card);
                         break;
                 }
             }
-            _users[user1].Draw();
-            _users[user2].Draw();
-            sb.AppendLine("Draw");
-            _batteResults.Enqueue(sb.ToString());
-            _batteResults.Enqueue(sb.ToString());
+
+            if (user1 != user2)
+            {
+                _users[user1].Draw();
+                _users[user2].Draw();
+            }
+
+            // sb.AppendLine("Draw");
+            battleDetails.Winner = "Draw";
+            _users[user1].MatchHistory.Add(DateTime.Now, battleDetails);
+            _users[user2].MatchHistory.Add(DateTime.Now, battleDetails);
+            // _batteResults.Enqueue(sb.ToString());
+            // _batteResults.Enqueue(sb.ToString());
             return true;
+        }
+
+        public string GetUserData(string username, string token)
+        {
+            string tmpUsername = this.GetLoginNameFromToken(token);
+            if (tmpUsername != username)
+            {
+                return string.Empty;
+            }
+
+            return JsonConvert.SerializeObject(_users[username]);
+        }
+
+        public bool UpdateUserData(string token, string jsonBody)
+        {
+            string username = this.GetLoginNameFromToken(token);
+            if (username == string.Empty || !_users.ContainsKey(username))
+            {
+                return false;
+            }
+
+            try
+            {
+                JObject myJobject = JObject.Parse(jsonBody);
+                string name = myJobject.GetValue("Name", StringComparison.OrdinalIgnoreCase).Value<string>();
+                string bio = myJobject.GetValue("Bio", StringComparison.OrdinalIgnoreCase).Value<string>();
+                string status = myJobject.GetValue("Status", StringComparison.OrdinalIgnoreCase).Value<string>();
+                _users[username].NameTag = name;
+                _users[username].Bio = bio;
+                _users[username].Status = status;
+                return true;
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"ERROR: {ex.Message}");
+                return false;
+            }
+        }
+
+        public string GetStats(string token)
+        {
+            string username = GetLoginNameFromToken(token);
+            if (username == string.Empty)
+            {
+                return string.Empty;
+            }
+
+            JObject o;
+            if (_users[username].TotalGames == 0)
+            {
+                o = JObject.FromObject(new
+                {
+                    loginName = _users[username].LoginName,
+                    totalGamesPlayed = _users[username].TotalGames,
+                    elo = _users[username].Elo,
+                    winLooseRatio = 0,
+                    wins = _users[username].Wins,
+                    looses = _users[username].Looses,
+                    draws = _users[username].TotalGames - (_users[username].Looses + _users[username].Wins),
+                    matchHistory = from m in _users[username].MatchHistory
+                        orderby m.Key descending
+                        select new
+                        {
+                            dateTime = m.Key,
+                            rounds = m.Value.Rounds.Count,
+                            user1 = m.Value.User1,
+                            user2 = m.Value.User2,
+                            winner = m.Value.Winner
+                        }
+                });
+                return o.ToString();
+            }
+
+            o = JObject.FromObject(new
+            {
+                loginName = _users[username].LoginName,
+                totalGamesPlayed = _users[username].TotalGames,
+                elo = _users[username].Elo,
+                winrate = _users[username].Wins / _users[username].TotalGames,
+                wins = _users[username].Wins,
+                looses = _users[username].Looses,
+                draws = _users[username].TotalGames - (_users[username].Looses + _users[username].Wins),
+                matchHistory = (from m in _users[username].MatchHistory
+                    orderby m.Key descending
+                    select new
+                    {
+                        dateTime = m.Key,
+                        rounds = m.Value.Rounds.Count,
+                        user1 = m.Value.User1,
+                        user2 = m.Value.User2,
+                        winner = m.Value.Winner
+                    }).Take(10)
+            });
+            return o.ToString();
+        }
+
+        public string GetScoreboard()
+        {
+            JObject o = JObject.FromObject(new
+            {
+                totalGamesPlayedByAllUsers = _users.Values.Sum(u => u.TotalGames) / 2,
+                highestElo = _users.Values.Max(u => u.Elo),
+                users = (from u in _users
+                    orderby u.Value.Elo descending
+                    select new
+                    {
+                        displayName = u.Value.NameTag,
+                        totalGamesPlayed = u.Value.TotalGames,
+                        elo = u.Value.Elo,
+                        wins = u.Value.Wins,
+                        looses = u.Value.Looses,
+                        draws = u.Value.TotalGames - (u.Value.Looses + u.Value.Wins),
+                    }).Take(5)
+            });
+            return o.ToString();
         }
     }
 }
