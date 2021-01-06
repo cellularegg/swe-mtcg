@@ -3,6 +3,7 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using System.Text;
 
 namespace swe_mtcg.Card
 {
@@ -59,6 +60,24 @@ namespace swe_mtcg.Card
                 Debug.WriteLine(e);
                 return null;
             }
+        }
+
+        public override string ToString()
+        {
+            if (this.Cards.Count == 0)
+            {
+                return string.Empty;
+            }
+
+            StringBuilder sb = new StringBuilder();
+            sb.AppendLine("Card Collection:");
+            foreach (KeyValuePair<string, ICard> card in Cards)
+            {
+                sb.AppendLine(
+                    $"\tId: {card.Value.Id}, Name: {card.Value.Name}, Damage: {card.Value.Damage}, Element: {card.Value.Element}");
+            }
+
+            return sb.ToString();
         }
     }
 }
