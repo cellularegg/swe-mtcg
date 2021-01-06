@@ -16,7 +16,8 @@ namespace swe_mtcg
         public string Body { get; set; }
         public Dictionary<string, string> Headers { get; set; }
 
-        private RequestContext(RequestMethod method, string path, string host, Dictionary<string, string> headers, string body = "")
+        private RequestContext(RequestMethod method, string path, string host, Dictionary<string, string> headers,
+            string body = "")
         {
             this.Method = method;
             this.Path = path;
@@ -31,6 +32,7 @@ namespace swe_mtcg
             {
                 return null;
             }
+
             request = request.Replace("\r", string.Empty);
             string[] content = request.Split('\n');
 
@@ -43,13 +45,14 @@ namespace swe_mtcg
             // Parse String to Enum
             try
             {
-                requestMethod = (RequestMethod)Enum.Parse(typeof(RequestMethod), methodString, true);
+                requestMethod = (RequestMethod) Enum.Parse(typeof(RequestMethod), methodString, true);
             }
             catch (ArgumentException ex)
             {
                 Console.WriteLine($"ERROR: {methodString} is not a member of RequestMethod enum. Exception: ${ex}");
                 return null;
             }
+
             // Read Headers
             for (int i = 1; i < content.Length; i++)
             {
@@ -58,16 +61,15 @@ namespace swe_mtcg
                     bodyStartIdx = i;
                     break;
                 }
-                // Headers are case-insensetive -> https://www.w3.org/Protocols/rfc2616/rfc2616-sec4.html#sec4.2
-                // Every header to lowercase
-                string[] tmp = content[i].ToLower().Split(' ');
-                if (tmp.Length == 2)
-                {
-                    // Remove ':'
-                    tmp[0] = tmp[0].Remove(tmp[0].Length - 1);
-                    headers.Add(tmp[0], tmp[1]);
-                }
+
+                // Header keys are case-insensetive -> https://www.w3.org/Protocols/rfc2616/rfc2616-sec4.html#sec4.2
+                // Values are not!
+                string key = content[i].ToLower().Substring(0, content[i].IndexOf(':'));
+                string val = content[i].Substring(content[i].IndexOf(':') + 1).Trim();
+                headers.Add(key, val);
+                
             }
+
             // Read Body 
             if (bodyStartIdx != -1)
             {
@@ -79,16 +81,17 @@ namespace swe_mtcg
                     }
                 }
             }
+
             if (headers.ContainsKey("host"))
             {
                 return new RequestContext(requestMethod, path, headers["host"], headers, body);
             }
+
             return null;
         }
 
         public override string ToString()
         {
-
             string tmp = $"----------------------------------------------------------{Environment.NewLine}";
             tmp += $"RequestContext:{Environment.NewLine}";
             tmp += $"\tType: {this.Method}{Environment.NewLine}";
@@ -99,6 +102,7 @@ namespace swe_mtcg
             {
                 tmp += $"\t\t {header.Key}:{header.Value}{Environment.NewLine}";
             }
+
             return tmp;
         }
     }
