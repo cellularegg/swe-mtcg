@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Text;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Converters;
 
 namespace swe_mtcg.Card
 {
@@ -9,6 +11,7 @@ namespace swe_mtcg.Card
         Guid Id { get; }
         string Name { get; }
         double Damage { get; }
+        [JsonConverter(typeof(StringEnumConverter))]  
         CardElement Element { get; }
         double GetAttackValue(ICard other);
     }
