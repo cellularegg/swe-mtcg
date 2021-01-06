@@ -291,18 +291,18 @@ namespace swe_mtcg.Test
             SpellCard waterSpell4 = new SpellCard("Water Spell", 10, CardElement.Water);
             SpellCard normalSpell = new SpellCard("Normal spell", 10, CardElement.Normal);
             MonsterCard normalKnight = new MonsterCard("Knight", 15, CardElement.Normal);
-            
+            string msg;
             // Monster only
-            Assert.AreEqual(2, AbstractCard.Battle(waterGoblin, fireKnight));
+            Assert.AreEqual(2, AbstractCard.Battle(waterGoblin, fireKnight, out msg));
             // Spells only
-            Assert.AreEqual(2, AbstractCard.Battle(fireSpell1, waterSpell1));
-            Assert.AreEqual(0, AbstractCard.Battle(fireSpell2, waterSpell2));
-            Assert.AreEqual(1, AbstractCard.Battle(fireSpell3, waterSpell3));
+            Assert.AreEqual(2, AbstractCard.Battle(fireSpell1, waterSpell1, out msg));
+            Assert.AreEqual(0, AbstractCard.Battle(fireSpell2, waterSpell2, out msg));
+            Assert.AreEqual(1, AbstractCard.Battle(fireSpell3, waterSpell3, out msg));
             // Mixed battle
-            Assert.AreEqual(2, AbstractCard.Battle(fireSpell1, waterGoblin));
-            Assert.AreEqual(0, AbstractCard.Battle(waterSpell4, waterGoblin));
-            Assert.AreEqual(1, AbstractCard.Battle(normalSpell, waterGoblin));
-            Assert.AreEqual(2, AbstractCard.Battle(normalSpell, normalKnight));
+            Assert.AreEqual(2, AbstractCard.Battle(fireSpell1, waterGoblin, out msg));
+            Assert.AreEqual(0, AbstractCard.Battle(waterSpell4, waterGoblin, out msg));
+            Assert.AreEqual(1, AbstractCard.Battle(normalSpell, waterGoblin, out msg));
+            Assert.AreEqual(2, AbstractCard.Battle(normalSpell, normalKnight, out msg));
             
             
         }

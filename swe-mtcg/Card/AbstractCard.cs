@@ -103,20 +103,23 @@ namespace swe_mtcg.Card
         // return 1 when card 1 wins
         // return 2 when card 2 wins
         // return 0 when draw
-        public static int Battle(ICard card1, ICard card2)
+        public static int Battle(ICard card1, ICard card2, out string msg)
         {
             double card1AttackVal = card1.GetAttackValue(card2);
             double card2AttackVal = card2.GetAttackValue(card1);
             if (card1AttackVal < card2AttackVal)
             {
+                msg = $"User2 wins: card1: {card1}, card2: {card2}, {card1AttackVal} vs. {card2AttackVal}.";
                 return 2;
             }
 
             if (card1AttackVal > card2AttackVal)
             {
+                msg = $"User1 wins: card1: {card1}, card2: {card2}, {card1AttackVal} vs. {card2AttackVal}.";
                 return 1;
             }
 
+            msg = $"Draw: card1: {card1}, card2: {card2}, {card1AttackVal} vs. {card2AttackVal}.";
             return 0;
         }
 
