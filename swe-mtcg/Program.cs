@@ -6,7 +6,10 @@ namespace swe_mtcg
     {
         static void Main(string[] args)
         {
-            Console.WriteLine("Hello World!");
+            Console.Title = "mtcg-zelenay-david";
+            Console.WriteLine("Starting server on port 10001");
+            HTTPServer server = new HTTPServer(10001);
+            server.Start();
         }
     }
 }

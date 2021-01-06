@@ -1,13 +1,15 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-
-namespace swe_mtcg.Card
+﻿namespace swe_mtcg.Card
 {
     public class SpellCard : AbstractCard
     {
-        public SpellCard(string name, int damage, CardElement element = CardElement.Normal) : base(name, damage, element, CardType.SpellCard)
+        public SpellCard(string name, double damage, CardElement element = CardElement.Normal, string id = "") : base(
+            name, damage, element, id)
         {
+        }
+
+        public override string ToString()
+        {
+            return $"Id: {Id}, Name: {Name}, Element: {Element}, Damage: {Damage}";
         }
     }
 }

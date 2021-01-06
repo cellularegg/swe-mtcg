@@ -12,7 +12,7 @@ namespace swe_mtcg
     public class HTTPServer
     {
         public const string VERSION = "HTTP/1.1";
-        public int port { get; private set; }
+        public int port { get; }
         public bool isRunning { get; private set; }
         private TcpListener _tcpListener;
 
@@ -23,14 +23,8 @@ namespace swe_mtcg
             _tcpListener = new TcpListener(IPAddress.Any, port);
         }
 
-        public void Start()
-        {
-            // Thread serverThread = new Thread(new ThreadStart(Run));
-            // serverThread.Start();
-            this.Run();
-        }
 
-        private void Run()
+        public void Start()
         {
             isRunning = true;
             _tcpListener.Start();
