@@ -30,7 +30,7 @@ namespace swe_mtcg
         private Dictionary<string, bool> _allCardIds;
         private ConcurrentBag<ICardCollection> _availablePackages;
         private ConcurrentQueue<string> _battleQ;
-        private ConcurrentQueue<string> _batteResults;
+        private ConcurrentDictionary<string, TradingDeal> _tradingDeals;
 
         static ServerData()
         {
@@ -39,20 +39,20 @@ namespace swe_mtcg
         private ServerData()
         {
             _battleQ = new ConcurrentQueue<string>();
-            _batteResults = new ConcurrentQueue<string>();
             _users = new ConcurrentDictionary<string, User.User>();
             _availablePackages = new ConcurrentBag<ICardCollection>();
             _allCardIds = new Dictionary<string, bool>();
+            _tradingDeals = new ConcurrentDictionary<string, TradingDeal>();
         }
 
         // For testing with singleton class
         public void Reset()
         {
             _battleQ = new ConcurrentQueue<string>();
-            _batteResults = new ConcurrentQueue<string>();
             _users = new ConcurrentDictionary<string, User.User>();
             _availablePackages = new ConcurrentBag<ICardCollection>();
             _allCardIds = new Dictionary<string, bool>();
+            _tradingDeals = new ConcurrentDictionary<string, TradingDeal>();
         }
 
         public bool RegisterUser(string jsonBody)
@@ -614,6 +614,206 @@ namespace swe_mtcg
                     }).Take(5)
             });
             return o.ToString();
+        }
+
+        public bool CreateTradingDeal(string token, string jsonBody)
+        {
+            string username = this.GetLoginNameFromToken(token);
+            if (username == string.Empty || !_users.ContainsKey(username))
+            {
+                return false;
+            }
+
+            try
+            {
+                JObject myJobject = JObject.Parse(jsonBody);
+                string tradeId = "";
+                double eloWanted = double.MaxValue;
+                if (myJobject.ContainsKey("Id"))
+                {
+                    tradeId = myJobject.GetValue("Id", StringComparison.OrdinalIgnoreCase).Value<string>();
+                }
+
+                if (myJobject.ContainsKey("EloWanted"))
+                {
+                    eloWanted = myJobject.GetValue("EloWanted", StringComparison.OrdinalIgnoreCase).Value<double>();
+                }
+
+                string cardToTradeId = myJobject.GetValue("CardToTrade", StringComparison.OrdinalIgnoreCase)
+                    .Value<string>();
+                string type = myJobject.GetValue("Type", StringComparison.OrdinalIgnoreCase).Value<string>();
+                double minimumDamage = myJobject.GetValue("MinimumDamage", StringComparison.OrdinalIgnoreCase)
+                    .Value<double>();
+
+                // Check if player has card
+                if (!_users[username].Stack.Cards.ContainsKey(cardToTradeId))
+                {
+                    // Player does not own card or it is currently being used in the deck
+                    return false;
+                }
+
+                // Remove card from stack
+                ICard cardToTrade = _users[username].Stack.RemoveCard(cardToTradeId);
+                if (cardToTrade == null)
+                {
+                    // Error occured when removing card
+                    return false;
+                }
+
+                // Create new Trading deal with specified requirements
+                TradingDeal tradingDeal =
+                    new TradingDeal(cardToTrade, username, type, minimumDamage, eloWanted, tradeId);
+                if (_tradingDeals.TryAdd(tradingDeal.Id.ToString(), tradingDeal))
+                {
+                    return true;
+                }
+
+                // Adding to Trading Deals failed -> Add Card to player Stack
+                _users[username].Stack.AddCard(cardToTrade);
+                return false;
+            }
+            catch (JsonException ex)
+            {
+                Debug.WriteLine($"ERROR: {ex.Message}");
+                return false;
+            }
+        }
+
+        public bool Trade(string tradeId, string token, string jsonBody)
+        {
+            string username = this.GetLoginNameFromToken(token);
+            if (username == string.Empty || !_users.ContainsKey(username) || !_tradingDeals.ContainsKey(tradeId))
+            {
+                return false;
+            }
+
+            try
+            {
+                JObject myJobject = JObject.Parse(jsonBody);
+                string cardToTradeId = myJobject.GetValue("CardToTrade", StringComparison.OrdinalIgnoreCase)
+                    .Value<string>();
+                TradingDeal td;
+                if (!_tradingDeals.TryRemove(tradeId, out td))
+                {
+                    return false;
+                }
+                
+                if (td.Owner == username)
+                {
+                    _tradingDeals.TryAdd(td.Id.ToString(), td);
+                    // Trading with yourself is not allowed
+                    return false;
+                }
+                
+
+                // Trade for Card
+                if (cardToTradeId != "")
+                {
+                    // Check if player has card
+                    if (!_users[username].Stack.Cards.ContainsKey(cardToTradeId))
+                    {
+                        _tradingDeals.TryAdd(td.Id.ToString(), td);
+
+                        // Player does not own card or it is currently being used in the deck
+                        return false;
+                    }
+
+                    // Check requirements
+                    bool tradevalid = td.IsValidTrade(_users[username].Stack.Cards[cardToTradeId]);
+                    if (!td.IsValidTrade(_users[username].Stack.Cards[cardToTradeId]))
+                    {
+                        _tradingDeals.TryAdd(td.Id.ToString(), td);
+
+                        // Card does not fulfill requirements
+                        return false;
+                    }
+
+                    // Remove card from stack
+                    ICard cardFromOther = _users[username].Stack.RemoveCard(cardToTradeId);
+                    if (cardFromOther == null)
+                    {
+                        _tradingDeals.TryAdd(td.Id.ToString(), td);
+
+                        // Error occured when removing card
+                        return false;
+                    }
+
+                    ICard cardFromTradeOwner = _users[td.Owner].Stack.RemoveCard(cardToTradeId);
+                    
+
+                    // Adding card "cannot" fail because the stack is locked when adding a card
+                    _users[td.Owner].Stack.AddCard(cardFromOther);
+                    _users[username].Stack.AddCard(td.CardToTrade);
+                    // Remove trading Deal
+                    return true;
+                }
+                // Trade for Elo
+                else
+                {
+                    // Check if other has enough elo
+                    if (_users[username].Elo >= td.EloRequirement)
+                    {
+                        _users[username].Elo -= td.EloRequirement;
+                        _users[td.Owner].Elo += td.EloRequirement;
+                        _users[username].Stack.AddCard(td.CardToTrade);
+                        return true;
+                    }
+                    else
+                    {
+                        _tradingDeals.TryAdd(td.Id.ToString(), td);
+                        return false;
+                    }
+                }
+            }
+            catch (JsonException ex)
+            {
+                Debug.WriteLine($"ERROR: {ex.Message}");
+                return false;
+            }
+        }
+
+        public string GetTradingDeals()
+        {
+            JArray o = JArray.FromObject(
+                from td in _tradingDeals
+                select new
+                {
+                    tradingId = td.Key,
+                    tradingDealOwner = td.Value.Owner,
+                    cardToTrade = td.Value.CardToTrade,
+                    typeRequired = td.Value.TypeRequirement,
+                    damageRequired = td.Value.DamageRequirement,
+                    eloReuired = td.Value.EloRequirement,
+                });
+            return o.ToString();
+        }
+
+        public bool DeleteTradingDeal(string token, string tradingDealId)
+        {
+            string username = this.GetLoginNameFromToken(token);
+            if (username == string.Empty || !_users.ContainsKey(username))
+            {
+                return false;
+            }
+
+            // Check if User is owner of trading deal
+            if (_tradingDeals.ContainsKey(tradingDealId) && _tradingDeals[tradingDealId].Owner != username)
+            {
+                return false;
+            }
+
+            if (!_tradingDeals.TryRemove(tradingDealId, out TradingDeal tmpTradingDeal) || tmpTradingDeal == null)
+            {
+                return false;
+            }
+
+            if (_users[username].Stack.AddCard(tmpTradingDeal.CardToTrade))
+            {
+                return true;
+            }
+            // Should not occur that a card disappears because AddCard Locks the stack of the player
+
+            return false;
         }
     }
 }

@@ -72,12 +72,6 @@ namespace swe_mtcg.User
             return Stack.AddCard(Deck.RemoveCard(id));
         }
 
-        public string GetStats()
-        {
-            // TODO implement DB Connection
-            throw new NotImplementedException();
-        }
-
         public void Draw()
         {
             this.TotalGames++;

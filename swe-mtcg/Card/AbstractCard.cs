@@ -125,8 +125,6 @@ namespace swe_mtcg.Card
 
         public double GetAttackValue(ICard other)
         {
-            // TODO Implement Battle Logic
-
             if (this is MonsterCard && other is MonsterCard)
             {
                 MonsterCard thisMc = (MonsterCard) this;
