@@ -7,7 +7,7 @@ namespace swe_mtcg.User
 {
     public class BattleDetails
     {
-        // TODO NOT TESTED
+        // NOT TESTED
         public string User1 { get; set; }
         public string User2 { get; set; }
         public string Winner { get; set; }

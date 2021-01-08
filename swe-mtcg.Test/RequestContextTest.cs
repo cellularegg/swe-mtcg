@@ -5,17 +5,19 @@ namespace swe_mtcg.Test
 {
     public class RequestContextTest
     {
-
         [Test]
         public void TestRequestContextGetRequestContextGetRequest()
         {
             // Arrange
             string request1Path = "/messages";
+            string request1QueryParamKey = "format";
+            string request1QueryParamVal = "plain";
             RequestMethod request1Verb = RequestMethod.GET;
             string request1Host = "localhost:8000";
             string request1HeaderUsrAgent = "curl/7.55.1";
             string request1HeaderAccept = "*/*";
-            string request1Valid = $"{request1Verb.ToString()} {request1Path} HTTP/1.1{Environment.NewLine}" +
+            string request1Valid =
+                $"{request1Verb.ToString()} {request1Path}?{request1QueryParamKey}={request1QueryParamVal} HTTP/1.1{Environment.NewLine}" +
                 $"Host: {request1Host}{Environment.NewLine}" +
                 $"User-Agent: {request1HeaderUsrAgent}{Environment.NewLine}" +
                 $"Accept: {request1HeaderAccept}{Environment.NewLine}{Environment.NewLine}";
@@ -41,6 +43,8 @@ CCCCC:: */*
             // Assert
             Assert.AreEqual(request1Verb, actualContext1.Method);
             Assert.AreEqual(request1Path, actualContext1.Path);
+            Assert.IsTrue(actualContext1.QueryParameters.ContainsKey(request1QueryParamKey));
+            Assert.AreEqual(request1QueryParamVal, actualContext1.QueryParameters[request1QueryParamKey]);
             Assert.AreEqual(request1Host, actualContext1.Host);
             Assert.AreEqual(string.Empty, actualContext1.Body);
             Assert.AreEqual(request1HeaderUsrAgent, actualContext1HeaderUsrAgent);
@@ -48,7 +52,6 @@ CCCCC:: */*
             Assert.IsNull(actualContext2);
             Assert.IsNull(actualContext3);
             Assert.IsNull(actualContext4);
-
         }
 
         [Test]
@@ -62,14 +65,14 @@ CCCCC:: */*
             string request1HeaderAccept = "*/*";
             string request1Body = $"Hey this {Environment.NewLine}is my Body{Environment.NewLine}";
             string request1Valid = $"{request1Verb.ToString()} {request1Path} HTTP/1.1{Environment.NewLine}" +
-                $"Host: {request1Host}{Environment.NewLine}" +
-                $"User-Agent: {request1HeaderUsrAgent}{Environment.NewLine}" +
-                $"Accept: {request1HeaderAccept}{Environment.NewLine}{Environment.NewLine}" +
-                $"{request1Body}";
+                                   $"Host: {request1Host}{Environment.NewLine}" +
+                                   $"User-Agent: {request1HeaderUsrAgent}{Environment.NewLine}" +
+                                   $"Accept: {request1HeaderAccept}{Environment.NewLine}{Environment.NewLine}" +
+                                   $"{request1Body}";
             string request2Valid = $"{request1Verb.ToString()} {request1Path} HTTP/1.1{Environment.NewLine}" +
-                            $"Host: {request1Host}{Environment.NewLine}" +
-                            $"User-Agent: {request1HeaderUsrAgent}{Environment.NewLine}" +
-                            $"Accept: {request1HeaderAccept}{Environment.NewLine}{Environment.NewLine}";
+                                   $"Host: {request1Host}{Environment.NewLine}" +
+                                   $"User-Agent: {request1HeaderUsrAgent}{Environment.NewLine}" +
+                                   $"Accept: {request1HeaderAccept}{Environment.NewLine}{Environment.NewLine}";
             // TODO Test Body and other VERBS
             // Act
             RequestContext actualContext1 = RequestContext.GetRequestContext(request1Valid);
@@ -93,6 +96,5 @@ CCCCC:: */*
             Assert.AreEqual(request1HeaderUsrAgent, actualContext2HeaderUsrAgent);
             Assert.AreEqual(request1HeaderAccept, actualContext2HeaderAccept);
         }
-
     }
 }

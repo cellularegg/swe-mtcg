@@ -390,7 +390,127 @@ namespace swe_mtcg.Test
             StringAssert.Contains("\"name\":\"hoax\"", json);
             StringAssert.Contains("\"bio\":\"meplayin...\"", json);
             StringAssert.Contains("\"status\":\":-)\"", json);
-            sd.Reset(); 
+            sd.Reset();
+        }
+
+        [Test]
+        public void TestCreateTradingDeal()
+        {
+            ServerData sd = ServerData.Instance;
+            sd.Reset();
+            string validToken1 = "david-mtcgToken";
+            string validJsonUser1 = "{\"Username\":\"david\", \"Password\":\"geheim\"}";
+            string validJsonPackage1 =
+                "[{\"Id\":\"845f0dc7-37d0-426e-994e-43fc3ac83c08\", \"Name\":\"WaterGoblin\", \"Damage\": 10.0}, {\"Id\":\"99f8f8dc-e25e-4a95-aa2c-782823f36e2a\", \"Name\":\"Dragon\", \"Damage\": 50.0}, {\"Id\":\"e85e3976-7c86-4d06-9a80-641c2019a79f\", \"Name\":\"WaterSpell\", \"Damage\": 20.0}, {\"Id\":\"1cb6ab86-bdb2-47e5-b6e4-68c5ab389334\", \"Name\":\"Ork\", \"Damage\": 45.0}, {\"Id\":\"dfdd758f-649c-40f9-ba3a-8657f4b3439f\", \"Name\":\"FireSpell\",    \"Damage\": 25.0}]";
+            string validJsonTradingDeal1 =
+                "{\"Id\": \"6cd85277-4590-49d4-b0cf-ba0a921faad0\", \"CardToTrade\": \"1cb6ab86-bdb2-47e5-b6e4-68c5ab389334\", \"Type\": \"monster\", \"MinimumDamage\": 15}";
+            string validJsonTradingDeal2 =
+                "{\"CardToTrade\": \"845f0dc7-37d0-426e-994e-43fc3ac83c08\", \"Type\": \"monster\", \"MinimumDamage\": 15}";
+
+            string validJsonTradingDeal3 =
+                "{\"Id\": \"6cd85277-4590-49d4-b0cf-ba0a921faad1\", \"CardToTrade\": \"e85e3976-7c86-4d06-9a80-641c2019a79f\", \"Type\": \"monster\", \"MinimumDamage\": 15, \"EloWanted\": 5}";
+
+            // Duplicate Trading Id
+            string invalidJsonTradingDeal1 =
+                "{\"Id\": \"6cd85277-4590-49d4-b0cf-ba0a921faad0\", \"CardToTrade\": \"1cb6ab86-bdb2-47e5-b6e4-68c5ab389334\", \"Type\": \"monster\", \"MinimumDamage\": 15}";
+            // Invalid Json 
+            string invalidJsonTradingDeal2 =
+                "6cd85277-4590-49d4-b0cf-ba0a921faad0\", \"CardToTrade\": \"1cb6ab86-bdb2-47e5-b6e4-68c5ab389334\", \"Type\": \"monster\", \"MinimumDamage\": 15}";
+
+            // Register User
+            Assert.IsTrue(sd.RegisterUser(validJsonUser1));
+            // Add package
+            Assert.IsTrue(sd.AddPackage(validJsonPackage1));
+            Assert.IsTrue(sd.AcquirePackage(validToken1));
+            Assert.IsTrue(sd.CreateTradingDeal(validToken1, validJsonTradingDeal1));
+            Assert.IsTrue(sd.CreateTradingDeal(validToken1, validJsonTradingDeal2));
+            Assert.IsTrue(sd.CreateTradingDeal(validToken1, validJsonTradingDeal3));
+            // Player should not own card anymore
+            Assert.IsFalse(sd.CreateTradingDeal(validToken1, validJsonTradingDeal1));
+            Assert.IsFalse(sd.CreateTradingDeal(validToken1, invalidJsonTradingDeal1));
+            Assert.IsFalse(sd.CreateTradingDeal(validToken1, invalidJsonTradingDeal2));
+            // 
+        }
+
+        [Test]
+        public void TestDeleteTradingDeal()
+        {
+            ServerData sd = ServerData.Instance;
+            sd.Reset();
+            string validToken1 = "david-mtcgToken";
+            string invalidToken1 = "admin-mtcgToken";
+            string validJsonUser1 = "{\"Username\":\"david\", \"Password\":\"geheim\"}";
+            string validJsonPackage1 =
+                "[{\"Id\":\"845f0dc7-37d0-426e-994e-43fc3ac83c08\", \"Name\":\"WaterGoblin\", \"Damage\": 10.0}, {\"Id\":\"99f8f8dc-e25e-4a95-aa2c-782823f36e2a\", \"Name\":\"Dragon\", \"Damage\": 50.0}, {\"Id\":\"e85e3976-7c86-4d06-9a80-641c2019a79f\", \"Name\":\"WaterSpell\", \"Damage\": 20.0}, {\"Id\":\"1cb6ab86-bdb2-47e5-b6e4-68c5ab389334\", \"Name\":\"Ork\", \"Damage\": 45.0}, {\"Id\":\"dfdd758f-649c-40f9-ba3a-8657f4b3439f\", \"Name\":\"FireSpell\",    \"Damage\": 25.0}]";
+            string validJsonTradingDeal1 =
+                "{\"Id\": \"6cd85277-4590-49d4-b0cf-ba0a921faad0\", \"CardToTrade\": \"1cb6ab86-bdb2-47e5-b6e4-68c5ab389334\", \"Type\": \"monster\", \"MinimumDamage\": 15}";
+
+            // Register User
+            Assert.IsTrue(sd.RegisterUser(validJsonUser1));
+            // Add package
+            Assert.IsTrue(sd.AddPackage(validJsonPackage1));
+            Assert.IsTrue(sd.AcquirePackage(validToken1));
+            Assert.IsTrue(sd.CreateTradingDeal(validToken1, validJsonTradingDeal1));
+            // Player should not own card anymore
+
+            Assert.IsFalse(sd.DeleteTradingDeal(invalidToken1, "6cd85277-4590-49d4-b0cf-ba0a921faad0"));
+            Assert.IsFalse(sd.DeleteTradingDeal(validToken1, "invalidId"));
+            Assert.IsTrue(sd.DeleteTradingDeal(validToken1, "6cd85277-4590-49d4-b0cf-ba0a921faad0"));
+        }
+
+        [Test]
+        public void TestTrade()
+        {
+            ServerData sd = ServerData.Instance;
+            sd.Reset();
+            string validToken1 = "david-mtcgToken";
+            string validJsonUser1 = "{\"Username\":\"david\", \"Password\":\"geheim\"}";
+            string validToken2 = "admin-mtcgToken";
+            string validJsonUser2 = "{\"Username\":\"admin\", \"Password\":\"geheim\"}";
+            string validJsonPackage1 =
+                "[{\"Id\":\"845f0dc7-37d0-426e-994e-43fc3ac83c08\", \"Name\":\"WaterGoblin\", \"Damage\": 10.0}, {\"Id\":\"99f8f8dc-e25e-4a95-aa2c-782823f36e2a\", \"Name\":\"Dragon\", \"Damage\": 50.0}, {\"Id\":\"e85e3976-7c86-4d06-9a80-641c2019a79f\", \"Name\":\"WaterSpell\", \"Damage\": 20.0}, {\"Id\":\"1cb6ab86-bdb2-47e5-b6e4-68c5ab389334\", \"Name\":\"Ork\", \"Damage\": 45.0}, {\"Id\":\"dfdd758f-649c-40f9-ba3a-8657f4b3439f\", \"Name\":\"FireSpell\",    \"Damage\": 25.0}]";
+            string validJsonPackage2 =
+                "[{\"Id\":\"67f9048f-99b8-4ae4-b866-d8008d00c53d\", \"Name\":\"WaterGoblin\", \"Damage\": 100.0}, {\"Id\":\"aa9999a0-734c-49c6-8f4a-651864b14e62\", \"Name\":\"RegularSpell\", \"Damage\": 150.0}, {\"Id\":\"d6e9c720-9b5a-40c7-a6b2-bc34752e3463\", \"Name\":\"Knight\", \"Damage\": 120.0}, {\"Id\":\"02a9c76e-b17d-427f-9240-2dd49b0d3bfd\", \"Name\":\"RegularSpell\", \"Damage\": 145.0}, {\"Id\":\"2508bf5c-20d7-43b4-8c77-bc677decadef\", \"Name\":\"FireElf\", \"Damage\": 125.0}]";
+            string trade1Id = "6cd85277-4590-49d4-b0cf-ba0a921faad0";
+            string validJsonTradingDeal1 =
+                "{\"Id\": \"" + trade1Id +
+                "\", \"CardToTrade\": \"1cb6ab86-bdb2-47e5-b6e4-68c5ab389334\", \"Type\": \"monster\", \"MinimumDamage\": 15}";
+            string trade2Id = "6cd85277-4590-49d4-b0cf-ba0a921faad1";
+            string validJsonTradingDeal2 =
+                "{\"Id\": \"" + trade2Id +
+                "\", \"CardToTrade\": \"67f9048f-99b8-4ae4-b866-d8008d00c53d\", \"Type\": \"monster\", \"MinimumDamage\": 1000, \"EloWanted\": 5}";
+
+            // Trade for card
+            string validJsonTrade1 = "{\"CardToTrade\": \"d6e9c720-9b5a-40c7-a6b2-bc34752e3463\"}";
+            // Trade for elo
+            string validJsonTrade2 = "{\"CardToTrade\": \"\"}";
+            // Trade with yourself
+            string invalidJsonTrade1 = "{\"CardToTrade\": \"99f8f8dc-e25e-4a95-aa2c-782823f36e2a\"}";
+            // Card does not fulfill reqs
+            string invalidJsonTrade2 = "{\"CardToTrade\": \"02a9c76e-b17d-427f-9240-2dd49b0d3bfd\"}";
+            string invalidJsonTrade3 = "{\"CardToTrade\": \"invalidCardID\"}";
+
+            // Register User
+            Assert.IsTrue(sd.RegisterUser(validJsonUser1));
+            Assert.IsTrue(sd.RegisterUser(validJsonUser2));
+            // Add package
+            Assert.IsTrue(sd.AddPackage(validJsonPackage1));
+            Assert.IsTrue(sd.AcquirePackage(validToken1));
+            Assert.IsTrue(sd.AddPackage(validJsonPackage2));
+            Assert.IsTrue(sd.AcquirePackage(validToken2));
+
+            // Register Trades
+            Assert.IsTrue(sd.CreateTradingDeal(validToken1, validJsonTradingDeal1));
+            Assert.IsTrue(sd.CreateTradingDeal(validToken2, validJsonTradingDeal2));
+
+            // Trade with yourself
+            Assert.IsFalse(sd.Trade(trade1Id, validToken1, invalidJsonTrade1));
+            Assert.IsFalse(sd.Trade(trade1Id, validToken2, invalidJsonTrade2));
+            Assert.IsFalse(sd.Trade(trade1Id, validToken2, invalidJsonTrade3));
+            
+            // Successful trades
+            Assert.IsTrue(sd.Trade(trade1Id, validToken2, validJsonTrade1));
+            Assert.IsTrue(sd.Trade(trade2Id, validToken1, validJsonTrade2));
         }
 
         [Test]

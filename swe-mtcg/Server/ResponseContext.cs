@@ -4,6 +4,7 @@ using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Text;
 using System.Text.RegularExpressions;
+using NUnit.Framework.Internal.Execution;
 
 namespace swe_mtcg
 {
@@ -32,7 +33,6 @@ namespace swe_mtcg
             {
                 return NullResponse();
             }
-            // TODO Update accordingly
             // Endpoints:
             // POST /users - register
             // POST /sessions - "login"
@@ -44,8 +44,6 @@ namespace swe_mtcg
             // GET /deck?format=plain - show deck in plaintext
             // PUT /deck - configure deck
             // POST /battles - queue up for battle
-
-            // NOT IMPLEMENTED YET IN BACKEND LOGIC
             // Edit user data
             // GET /users/<username> - show userdata
             // PUT /users/<username> - update userdata (LoginName is not changeable)
@@ -76,100 +74,57 @@ namespace swe_mtcg
 
                     // improvement possible /cards and /deck nearly the same code
 
-                    if (request.Path.Contains("/cards"))
+
+                    if (request.Path == "/cards")
                     {
-                        if (request.Path == "/cards")
+                        string body;
+                        if (!ResponseContext.GetTokenFromHeader(request.Headers, out string token))
                         {
-                            string body;
-                            // Maybe todo refactor because "token extraction" is repeated multiple times
-                            string token = string.Empty;
-                            if (request.Headers.ContainsKey("authorization"))
-                            {
-                                token = ResponseContext.GetTokenFromHeader(request.Headers["authorization"]);
-                            }
-
-                            if (token == string.Empty)
-                            {
-                                return UnauthorizedResponse();
-                            }
-
-                            body = serverData.GetStack(token, true);
-                            return new ResponseContext("200 OK", "application/json", body);
+                            return UnauthorizedResponse();
                         }
 
-                        // TODO parse query parameters generically 
-                        if (request.Path == "/cards?format=plain")
+
+                        if (request.QueryParameters.ContainsKey("format") &&
+                            request.QueryParameters["format"] == "plain")
                         {
-                            string body;
-                            // Maybe todo refactor because "token extraction" is repeated multiple times
-                            string token = string.Empty;
-                            if (request.Headers.ContainsKey("authorization"))
-                            {
-                                token = ResponseContext.GetTokenFromHeader(request.Headers["authorization"]);
-                            }
-
-                            if (token == string.Empty)
-                            {
-                                return UnauthorizedResponse();
-                            }
-
                             body = serverData.GetStack(token, false);
-                            return new ResponseContext("200 OK", "text/plain", body);
                         }
+                        else
+                        {
+                            body = serverData.GetStack(token, true);
+                        }
+
+                        return new ResponseContext("200 OK", "application/json", body);
                     }
 
-                    if (request.Path.Contains("/deck"))
+
+                    if (request.Path == "/deck")
                     {
-                        if (request.Path == "/deck")
+                        string body;
+                        if (!ResponseContext.GetTokenFromHeader(request.Headers, out string token))
                         {
-                            string body;
-                            string token = string.Empty;
-                            if (request.Headers.ContainsKey("authorization"))
-                            {
-                                token = ResponseContext.GetTokenFromHeader(request.Headers["authorization"]);
-                            }
-
-                            if (token == string.Empty)
-                            {
-                                return UnauthorizedResponse();
-                            }
-
-                            body = serverData.GetDeck(token, true);
-                            return new ResponseContext("200 OK", "application/json", body);
+                            return UnauthorizedResponse();
                         }
 
-                        // TODO parse query parameters generically 
-                        if (request.Path == "/deck?format=plain")
+                        if (request.QueryParameters.ContainsKey("format") &&
+                            request.QueryParameters["format"] == "plain")
                         {
-                            string body;
-                            // Maybe todo refactor because "token extraction" is repeated multiple times
-                            string token = string.Empty;
-                            if (request.Headers.ContainsKey("authorization"))
-                            {
-                                token = ResponseContext.GetTokenFromHeader(request.Headers["authorization"]);
-                            }
-
-                            if (token == string.Empty)
-                            {
-                                return UnauthorizedResponse();
-                            }
-
                             body = serverData.GetDeck(token, false);
-                            return new ResponseContext("200 OK", "text/plain", body);
                         }
+                        else
+                        {
+                            body = serverData.GetDeck(token, true);
+                        }
+
+                        return new ResponseContext("200 OK", "application/json", body);
                     }
+
 
                     // Get User Data
                     if (request.Path.Contains("/users/"))
                     {
                         string username = Regex.Replace(request.Path, "^\\/users\\/", "");
-                        string token = string.Empty;
-                        if (request.Headers.ContainsKey("authorization"))
-                        {
-                            token = ResponseContext.GetTokenFromHeader(request.Headers["authorization"]);
-                        }
-
-                        if (token == string.Empty)
+                        if (!ResponseContext.GetTokenFromHeader(request.Headers, out string token))
                         {
                             return UnauthorizedResponse();
                         }
@@ -182,17 +137,11 @@ namespace swe_mtcg
 
                         return new ResponseContext("200 OK", "application/json", body);
                     }
+
                     if (request.Path == "/stats")
                     {
                         string body;
-                        // Maybe todo refactor because "token extraction" is repeated multiple times
-                        string token = string.Empty;
-                        if (request.Headers.ContainsKey("authorization"))
-                        {
-                            token = ResponseContext.GetTokenFromHeader(request.Headers["authorization"]);
-                        }
-
-                        if (token == string.Empty)
+                        if (!ResponseContext.GetTokenFromHeader(request.Headers, out string token))
                         {
                             return UnauthorizedResponse();
                         }
@@ -200,6 +149,14 @@ namespace swe_mtcg
                         body = serverData.GetStats(token);
                         return new ResponseContext("200 OK", "application/json", body);
                     }
+
+                    if (request.Path == "/tradings")
+                    {
+                        //  Maybe check for empty body??
+                        string body = serverData.GetTradingDeals();
+                        return new ResponseContext("200 OK", "application/json", body);
+                    }
+
                     if (request.Path == "/score")
                     {
                         string body;
@@ -247,13 +204,7 @@ namespace swe_mtcg
                     // Create Package
                     else if (request.Path == "/packages")
                     {
-                        string token = string.Empty;
-                        if (request.Headers.ContainsKey("authorization"))
-                        {
-                            token = ResponseContext.GetTokenFromHeader(request.Headers["authorization"]);
-                        }
-
-                        if (token == string.Empty)
+                        if (!ResponseContext.GetTokenFromHeader(request.Headers, out string token))
                         {
                             return UnauthorizedResponse();
                         }
@@ -272,13 +223,7 @@ namespace swe_mtcg
                     // Acquire Package
                     if (request.Path == "/transactions/packages")
                     {
-                        string token = string.Empty;
-                        if (request.Headers.ContainsKey("authorization"))
-                        {
-                            token = ResponseContext.GetTokenFromHeader(request.Headers["authorization"]);
-                        }
-
-                        if (token == string.Empty)
+                        if (!ResponseContext.GetTokenFromHeader(request.Headers, out string token))
                         {
                             return UnauthorizedResponse();
                         }
@@ -297,13 +242,7 @@ namespace swe_mtcg
                     if (request.Path == "/battles")
                     {
                         string body = "";
-                        string token = string.Empty;
-                        if (request.Headers.ContainsKey("authorization"))
-                        {
-                            token = ResponseContext.GetTokenFromHeader(request.Headers["authorization"]);
-                        }
-
-                        if (token == string.Empty)
+                        if (!ResponseContext.GetTokenFromHeader(request.Headers, out string token))
                         {
                             return UnauthorizedResponse();
                         }
@@ -320,6 +259,44 @@ namespace swe_mtcg
                         }
                     }
 
+                    if (request.Path.Contains("/tradings"))
+                    {
+                        // Create Package
+                        if (request.Path == "/tradings")
+                        {
+                            if (!ResponseContext.GetTokenFromHeader(request.Headers, out string token))
+                            {
+                                return UnauthorizedResponse();
+                            }
+
+                            if (serverData.CreateTradingDeal(token, request.Body))
+                            {
+                                return new ResponseContext("201 Created", "application/json",
+                                    "{ \"msg\": \"Trading deal created successfully.\" }\n");
+                            }
+
+                            return new ResponseContext("400 Bad Request", "application/json",
+                                "{ \"msg\": \"Error, make sure you own the cards, that you want to register for trading.\"}\n");
+                        }
+                        else
+                        {
+                            string tradeId = Regex.Replace(request.Path, "^\\/tradings\\/", "");
+                            if (!ResponseContext.GetTokenFromHeader(request.Headers, out string token))
+                            {
+                                return UnauthorizedResponse();
+                            }
+
+                            if (serverData.Trade(tradeId, token, request.Body))
+                            {
+                                return new ResponseContext("200 OK", "application/json",
+                                    "{ \"msg\": \"Trade was successful.\" }\n");
+                            }
+
+                            return new ResponseContext("400 Bad Request", "application/json",
+                                "{ \"msg\": \"Error, make sure you own the cards, that you want to register for trading.\"}\n");
+                        }
+                    }
+
 
                     return PageNotFoundResponse();
                 //break;
@@ -327,13 +304,7 @@ namespace swe_mtcg
                     // PUT /deck - configure deck
                     if (request.Path == "/deck")
                     {
-                        string token = string.Empty;
-                        if (request.Headers.ContainsKey("authorization"))
-                        {
-                            token = ResponseContext.GetTokenFromHeader(request.Headers["authorization"]);
-                        }
-
-                        if (token == string.Empty)
+                        if (!ResponseContext.GetTokenFromHeader(request.Headers, out string token))
                         {
                             return UnauthorizedResponse();
                         }
@@ -354,13 +325,7 @@ namespace swe_mtcg
                     if (request.Path.Contains("/users/"))
                     {
                         string username = Regex.Replace(request.Path, "^\\/users\\/", "");
-                        string token = string.Empty;
-                        if (request.Headers.ContainsKey("authorization"))
-                        {
-                            token = ResponseContext.GetTokenFromHeader(request.Headers["authorization"]);
-                        }
-
-                        if (token == string.Empty || (username + "-mtcgToken" != token))
+                        if (!ResponseContext.GetTokenFromHeader(request.Headers, out string token))
                         {
                             return UnauthorizedResponse();
                         }
@@ -378,38 +343,26 @@ namespace swe_mtcg
 
                     return PageNotFoundResponse();
                 case RequestMethod.DELETE:
-                    // Or if(msgId == -1) You can send PUT updates but have to provide correct json body!
-                    // if (request.Path == "/messages")
-                    // {
-                    //     int id = _msgColl.GetIdFromJson(request.Body);
-                    //     if (id == -1)
-                    //     {
-                    //         return new ResponseContext("400 Bad Request", "text/plain",
-                    //             "Error, make sure request is JSON and has Id key.\n");
-                    //     }
-                    //     else
-                    //     {
-                    //         if (_msgColl.DeleteMessage(id))
-                    //         {
-                    //             return new ResponseContext("200 OK", "text/plain", "Message successfully deleted.\n");
-                    //         }
-                    //
-                    //         // Maybe 500 is not the correct status code??
-                    //         return new ResponseContext("500 Internal Server Error", "text/plain",
-                    //             $"Error, when deleting msg with Id: {id}.\n");
-                    //     }
-                    // }
-                    // else if (msgId >= 0)
-                    // {
-                    //     if (_msgColl.DeleteMessage(msgId))
-                    //     {
-                    //         return new ResponseContext("200 OK", "text/plain", "Message successfully deleted.\n");
-                    //     }
-                    //
-                    //     // Maybe 500 is not the correct status code??
-                    //     return new ResponseContext("500 Internal Server Error", "text/plain",
-                    //         $"Error, when deleting msg with Id: {msgId}.\n");
-                    // }
+                    // Delete Trade
+                    if (request.Path.Contains("/tradings"))
+                    {
+                        // remove "/tradings/" from request path to get TradingId
+                        string tradeId = Regex.Replace(request.Path, "^\\/tradings\\/", "");
+                        if (!ResponseContext.GetTokenFromHeader(request.Headers, out string token))
+                        {
+                            return UnauthorizedResponse();
+                        }
+
+
+                        if (serverData.DeleteTradingDeal(token, tradeId))
+                        {
+                            return new ResponseContext("200 OK", "application/json",
+                                "{\"msg\": \"The Trading deal has successfully been deleted.\"}");
+                        }
+
+                        return new ResponseContext("400 Bad Request", "application/json",
+                            "{ \"msg\": \"Error, make sure you provided the correct trade id and that you are the owner of the trade.\"}\n");
+                    }
 
                     return PageNotFoundResponse();
                 default:
@@ -460,41 +413,31 @@ namespace swe_mtcg
             return new ResponseContext("405 Method Not Allowed", "text/plain", "Error method not allowed\n");
         }
 
-        private static string GetTokenFromHeader(string header)
+        private static bool GetTokenFromHeader(Dictionary<string, string> headers, out string token)
         {
             // header contains: "Basic username-mtcgToken"
-            string[] tmp = header.Split(' ');
-            if (tmp.Length == 2)
+            string headerContent;
+            if (headers.ContainsKey("authorization"))
             {
-                return tmp[1];
+                headerContent = headers["authorization"];
+            }
+            else
+            {
+                token = string.Empty;
+                return false;
             }
 
-            return string.Empty;
+            string[] tmp = headerContent.Split(' ');
+            if (tmp.Length == 2)
+            {
+                token = tmp[1];
+                return true;
+            }
+
+            token = string.Empty;
+            return false;
         }
 
-        // Returns the MessageId from the request path -1 when no msg id is provided and -100 if path is invalid
-        // Example: /messages will return -1 and /messages/7 will return 7
-        // I think this is not a clean implementation maybe TODO make it clean :)
-        // private static int GetMsgIdFromPath(string path)
-        // {
-        //     // Maybe shorter / better with regex?
-        //     string[] splitPath = path.Split('/');
-        //     if (splitPath.Length == 2 && splitPath[1] == "messages")
-        //     {
-        //         return -1;
-        //     }
-        //
-        //     if (splitPath.Length == 3 && splitPath[1] == "messages")
-        //     {
-        //         int id;
-        //         if (int.TryParse(splitPath[2], out id))
-        //         {
-        //             return id;
-        //         }
-        //     }
-        //
-        //     return -100;
-        // }
 
         private static string GetUsrFromPath(string path)
         {
