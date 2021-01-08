@@ -44,8 +44,6 @@ namespace swe_mtcg
             // GET /deck?format=plain - show deck in plaintext
             // PUT /deck - configure deck
             // POST /battles - queue up for battle
-
-            // NOT IMPLEMENTED YET IN BACKEND LOGIC
             // Edit user data
             // GET /users/<username> - show userdata
             // PUT /users/<username> - update userdata (LoginName is not changeable)
