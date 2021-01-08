@@ -16,7 +16,7 @@ namespace swe_mtcg.User
         [JsonProperty("Name")] public string NameTag { get; set; }
         public string Bio { get; set; }
         public string Status { get; set; }
-        public double Elo { get; private set; }
+        public double Elo { get; set; }
         public int TotalGames { get; private set; }
         public int Wins { get; private set; }
         public int Looses { get; private set; }
