@@ -262,11 +262,11 @@ echo.
 curl -X GET http://localhost:10001/tradings  --header "Authorization: Basic altenhof-mtcgToken"
 echo.
 echo try to trade with yourself (should fail)
-curl -X POST http://localhost:10001/tradings/6cd85277-4590-49d4-b0cf-ba0a921faad0 --header "Content-Type: application/json" --header "Authorization: Basic kienboec-mtcgToken" -d "\"4ec8b269-0dfa-4f97-809a-2c63fe2a0025\""
+curl -X POST http://localhost:10001/tradings/6cd85277-4590-49d4-b0cf-ba0a921faad0 --header "Content-Type: application/json" --header "Authorization: Basic kienboec-mtcgToken" -d "{\"CardToTrade\":\"4ec8b269-0dfa-4f97-809a-2c63fe2a0025\"}"
 echo.
 echo try to trade 
 echo.
-curl -X POST http://localhost:10001/tradings/6cd85277-4590-49d4-b0cf-ba0a921faad0 --header "Content-Type: application/json" --header "Authorization: Basic altenhof-mtcgToken" -d "\"951e886a-0fbf-425d-8df5-af2ee4830d85\""
+curl -X POST http://localhost:10001/tradings/6cd85277-4590-49d4-b0cf-ba0a921faad0 --header "Content-Type: application/json" --header "Authorization: Basic altenhof-mtcgToken" -d "{\"CardToTrade\":\"951e886a-0fbf-425d-8df5-af2ee4830d85\"}"
 echo.
 curl -X GET http://localhost:10001/tradings --header "Authorization: Basic kienboec-mtcgToken"
 echo.
