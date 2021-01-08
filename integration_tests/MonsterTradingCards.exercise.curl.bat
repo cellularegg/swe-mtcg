@@ -244,8 +244,6 @@ echo.
 echo check trading deals
 curl -X GET http://localhost:10001/tradings --header "Authorization: Basic kienboec-mtcgToken"
 echo.
-curl -X GET http://localhost:10001/tradings --header "Authorization: Basic altenhof-mtcgToken"
-echo.
 echo delete trading deals
 curl -X DELETE http://localhost:10001/tradings/6cd85277-4590-49d4-b0cf-ba0a921faad0 --header "Authorization: Basic kienboec-mtcgToken"
 echo.
@@ -256,23 +254,32 @@ echo 21) check trading deals
 curl -X GET http://localhost:10001/tradings  --header "Authorization: Basic kienboec-mtcgToken"
 echo.
 curl -X POST http://localhost:10001/tradings --header "Content-Type: application/json" --header "Authorization: Basic kienboec-mtcgToken" -d "{\"Id\": \"6cd85277-4590-49d4-b0cf-ba0a921faad0\", \"CardToTrade\": \"1cb6ab86-bdb2-47e5-b6e4-68c5ab389334\", \"Type\": \"monster\", \"MinimumDamage\": 15}"
+curl -X POST http://localhost:10001/tradings --header "Content-Type: application/json" --header "Authorization: Basic kienboec-mtcgToken" -d "{\"Id\": \"6cd85277-4590-49d4-b0cf-ba0a921faad1\", \"CardToTrade\": \"b017ee50-1c14-44e2-bfd6-2c0c5653a37c\", \"Type\": \"monster\", \"MinimumDamage\": 10000, \"EloWanted\": 5}"
 echo check trading deals
 curl -X GET http://localhost:10001/tradings  --header "Authorization: Basic kienboec-mtcgToken"
-echo.
-curl -X GET http://localhost:10001/tradings  --header "Authorization: Basic altenhof-mtcgToken"
 echo.
 echo try to trade with yourself (should fail)
 curl -X POST http://localhost:10001/tradings/6cd85277-4590-49d4-b0cf-ba0a921faad0 --header "Content-Type: application/json" --header "Authorization: Basic kienboec-mtcgToken" -d "{\"CardToTrade\":\"4ec8b269-0dfa-4f97-809a-2c63fe2a0025\"}"
 echo.
-echo try to trade 
+echo try to pay with elo when user does not have enough (should fail) 
+echo.
+curl -X POST http://localhost:10001/tradings/6cd85277-4590-49d4-b0cf-ba0a921faad0 --header "Content-Type: application/json" --header "Authorization: Basic altenhof-mtcgToken" -d "{\"CardToTrade\":\"\"}"
+echo.
+echo try to trade (card vs card)
 echo.
 curl -X POST http://localhost:10001/tradings/6cd85277-4590-49d4-b0cf-ba0a921faad0 --header "Content-Type: application/json" --header "Authorization: Basic altenhof-mtcgToken" -d "{\"CardToTrade\":\"951e886a-0fbf-425d-8df5-af2ee4830d85\"}"
 echo.
 curl -X GET http://localhost:10001/tradings --header "Authorization: Basic kienboec-mtcgToken"
 echo.
-curl -X GET http://localhost:10001/tradings --header "Authorization: Basic altenhof-mtcgToken"
+echo try to trade (card vs elo)
 echo.
-
+curl -X POST http://localhost:10001/tradings/6cd85277-4590-49d4-b0cf-ba0a921faad1 --header "Content-Type: application/json" --header "Authorization: Basic altenhof-mtcgToken" -d "{\"CardToTrade\":\"\"}"
+echo.
+curl -X GET http://localhost:10001/tradings --header "Authorization: Basic kienboec-mtcgToken"
+echo.
+echo scoreboard (changed elo)
+curl -X GET http://localhost:10001/score --header "Authorization: Basic kienboec-mtcgToken"
+echo.
 REM --------------------------------------------------
 echo end...
 
